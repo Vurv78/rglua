@@ -43,6 +43,25 @@ pub struct RLSThreadable {
 }
 
 /// This is the wrapper for the LuaState null ptr that we keep and use functions with.
+/// Here is a basic example of how to use the wrapper in a binary module
+/// ```
+/// use rglua::{RLuaState,LuaState};
+/// #[no_mangle]
+/// pub extern fn gmod13_open(state: LuaState) -> i32 {
+///     let mut wrapped = RLuaState::new(state);
+///     // This is the same as doing 'printgm!(wrapped,"Hello from rust!")'
+///     wrapped.get_global(&"print");
+///     wrapped.push_string(&"Hello from rust!");
+///     wrapped.call(1,0);
+///     0
+/// }
+/// #[no_mangle]
+/// pub extern fn gmod13_close(state: LuaState) -> i32 {
+///    let _wrapped = RLuaState::new(state);
+///    0
+/// }
+/// ```
+
 impl RLuaState {
     pub fn new(state: LuaState) -> RLuaState {
         RLuaState {
