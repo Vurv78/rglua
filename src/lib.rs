@@ -170,6 +170,7 @@ impl RLuaState {
 
 
 #[allow(unused_macros)]
+#[macro_export]
 /// Like println!, however it prints to the gmod server's console.
 macro_rules! printgm {
     // First arg is the lua state.
