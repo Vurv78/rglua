@@ -18,3 +18,7 @@ Example Module:
 ```rust
 // Todo
 ```
+
+This is currently not in a very buildable state. Once it is, I will make the first release and add example modules to the repo.
+If you want to look into how to build your projects, see my other repo https://github.com/Vurv78/gmod-rust-test and build.bat.
+You need to build to 32 bit if you want to build to srcds, since it is 32 bit and you need to make sure your rust library is a "cdylib".
