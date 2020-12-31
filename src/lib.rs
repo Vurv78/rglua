@@ -59,9 +59,10 @@ impl RLuaState {
 
 /// This is a struct that is returned from calling get_threadsafe on an RLuaState.
 /// ```
-/// let nullptr: *mut CVoid = std::ptr::null_mut();
+/// use rglua::RLuaState;
+/// let nullptr = std::ptr::null_mut();
 ///
-/// let rlua_state = LuaState::new( nullptr ); // Fake Lua State object made from a null mutable ptr.
+/// let rlua_state = RLuaState::new( nullptr ); // Fake Lua State object made from a null mutable ptr.
 /// let mut api = rlua_state.get_threadsafe();
 /// for _ in 1..10 {
 ///     let safe_instance = api.get_clone();
@@ -80,14 +81,6 @@ impl RLSThreadable {
 unsafe impl Send for RLuaState {}
 
 /// This is a wrapper for a traditional lua state that will allow easy access to rglua's library.
-/// ```
-/// // This is an example of a simple gmod13_open function.
-/// #[no_mangle]
-/// pub extern fn gmod13_open(state: LuaState) -> c_int {
-///     let mut rluastate = RLuaState::new(state);
-///     printgm!(rluastate,"Hello from rust!");
-/// }
-/// ```
 impl RLuaState {
     pub fn get_number(&mut self, stack_pos: i32) -> CDouble {
         unsafe {
@@ -169,9 +162,9 @@ impl RLuaState {
 }
 
 
+
 #[allow(unused_macros)]
 #[macro_export]
-/// Like println!, however it prints to the gmod server's console.
 macro_rules! printgm {
     // First arg is the lua state.
     // Rest are varargs.
