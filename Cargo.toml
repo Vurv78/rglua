@@ -1,0 +1,13 @@
+[package]
+name = "rglua"
+description = "GLua bindings for rust."
+version = "0.1.0"
+authors = ["Vurv <vurvdevelops@gmail.com>"]
+build = "build.rs"
+keywords = ["glua","garrysmod","lua"]
+readme = "README.md"
+
+# Remember to make your output module a cdylib.
+
+[build-dependencies]
+cc = "1.0.65"
