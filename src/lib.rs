@@ -10,12 +10,13 @@ pub type CDouble = f64; // All lua numbers are doubles in Lua 5.1 (Glua)
 pub type LuaNumber = CDouble;
 pub type LuaState = *mut CVoid; // Raw Lua state.
 
-// C Functions, you shouldn't have to use these in your modules as long as we make wrappers
+// Extern raw functions that shouldn't need to be used by the lib user.
 extern {
-    // Get
-    fn glua_get_string(state: LuaState, stack_pos: i32) -> *const CChar;
-    fn glua_get_number(state: LuaState, stack_pos: i32) -> CDouble;
+    // Get (Throws errors if given incorrect type)
+    fn glua_check_string(state: LuaState, stack_pos: i32) -> *const CChar;
+    fn glua_check_number(state: LuaState, stack_pos: i32) -> CDouble;
 
+    // Get (Misc)
     fn glua_get_field(state: LuaState, stack_pos: i32, string: *const CChar);
 
     fn glua_get_userdata(state: LuaState, stack_pos: i32);
@@ -45,19 +46,21 @@ pub struct RLSThreadable {
 /// This is the wrapper for the LuaState null ptr that we keep and use functions with.
 /// Here is a basic example of how to use the wrapper in a binary module
 /// ```
-/// use rglua::{RLuaState,LuaState};
+/// use rglua::{RLuaState,LuaState,printgm};
 /// #[no_mangle]
-/// pub extern fn gmod13_open(state: LuaState) -> i32 {
+/// unsafe extern fn gmod13_open(state: LuaState) -> i32 {
 ///     let mut wrapped = RLuaState::new(state);
 ///     // This is the same as doing 'printgm!(wrapped,"Hello from rust!")'
 ///     wrapped.get_global(&"print");
 ///     wrapped.push_string(&"Hello from rust!");
 ///     wrapped.call(1,0);
+///     printgm!(wrapped,"Also hello!");
 ///     0
 /// }
 /// #[no_mangle]
-/// pub extern fn gmod13_close(state: LuaState) -> i32 {
-///    let _wrapped = RLuaState::new(state);
+/// unsafe extern fn gmod13_close(state: LuaState) -> i32 {
+///    let mut wrapped = RLuaState::new(state);
+///    printgm!(wrapped,"Goodbye!");
 ///    0
 /// }
 /// ```
@@ -78,7 +81,7 @@ impl RLuaState {
 
 /// This is a struct that is returned from calling get_threadsafe on an RLuaState.
 /// ```
-/// use rglua::RLuaState;
+/// use rglua::{RLuaState,printgm};
 /// let nullptr = std::ptr::null_mut();
 ///
 /// let rlua_state = RLuaState::new( nullptr ); // Fake Lua State object made from a null mutable ptr.
@@ -86,7 +89,10 @@ impl RLuaState {
 /// for _ in 1..10 {
 ///     let safe_instance = api.get_clone();
 ///     std::thread::spawn(move || {
-///         let rluastate = safe_instance.lock().unwrap();
+///         let mut rluastate = safe_instance.lock().unwrap();
+///         unsafe {
+///             printgm!(rluastate,"Hello!");
+///         };
 ///         // Do your multi-threaded stuff here
 ///     });
 /// }
@@ -101,82 +107,63 @@ unsafe impl Send for RLuaState {}
 
 /// This is a wrapper for a traditional lua state that will allow easy access to rglua's library.
 impl RLuaState {
-    pub fn get_number(&mut self, stack_pos: i32) -> CDouble {
-        unsafe {
-            glua_get_number(self.raw_state,stack_pos)
-        }
+    /// This is actually luaL_checknumber, which automatically throws an error if they don't provide the number.
+    pub unsafe fn get_number(&mut self, stack_pos: i32) -> CDouble {
+        glua_check_number(self.raw_state,stack_pos)
     }
 
-    /// This is actually luaL_check_string.
-    pub fn get_string(&mut self, stack_pos: i32) -> String {
-        unsafe {
-            let glua_chars = glua_get_string(self.raw_state,stack_pos);
-            CStr::from_ptr(glua_chars).to_string_lossy().into_owned()
-        }
+    /// This is actually luaL_checkstring, which automatically throws an error if they don't provide the number.
+    pub unsafe fn get_string(&mut self, stack_pos: i32) -> String {
+        let glua_chars = glua_check_string(self.raw_state,stack_pos);
+        CStr::from_ptr(glua_chars).to_string_lossy().into_owned()
     }
 
-    pub fn get_field(&mut self, stack_pos: i32, key: &str) {
-        unsafe {
-            glua_get_field( self.raw_state, stack_pos, CString::new(key).unwrap().as_ptr() )
-        }
+    pub unsafe fn get_field(&mut self, stack_pos: i32, key: &str) {
+        glua_get_field( self.raw_state, stack_pos, CString::new(key).unwrap().as_ptr() )
     }
 
-    pub fn get_global(&mut self, key: &str) {
+    pub unsafe fn get_global(&mut self, key: &str) {
         self.get_field(-10002,key)
     }
 
-    pub fn get_userdata(&mut self, stack_pos: i32) {
-        unsafe {
-            glua_get_userdata(self.raw_state,stack_pos)
-        }
+    pub unsafe fn get_userdata(&mut self, stack_pos: i32) {
+        glua_get_userdata(self.raw_state,stack_pos)
     }
 }
 
 /// Lua Push Functions
 impl RLuaState {
-    pub fn push_number(&mut self, num: i32) {
-        unsafe {
-            glua_push_number(self.raw_state,num as CDouble)
-        }
+    pub unsafe fn push_number(&mut self, num: i32) {
+        glua_push_number(self.raw_state,num as CDouble)
     }
-    pub fn push_string(&mut self, string: &str) {
-        unsafe {
-            glua_push_string(self.raw_state,CString::new(string).unwrap().as_ptr());
-        }
+    pub unsafe fn push_string(&mut self, string: &str) {
+        glua_push_string(self.raw_state,CString::new(string).unwrap().as_ptr());
     }
-    pub fn push_cfunc(&mut self, func: extern fn(LuaState) -> i32) {
-        unsafe {
-            glua_push_cfunc(self.raw_state,func)
-        }
+    pub unsafe fn push_cfunc(&mut self, func: extern fn(LuaState) -> i32) {
+        glua_push_cfunc(self.raw_state,func)
     }
-    pub fn push_global(&mut self) {
-        unsafe {
-            glua_push_global(self.raw_state)
-        }
+    pub unsafe fn push_global(&mut self) {
+        glua_push_global(self.raw_state)
     }
 }
 
 /// Lua Set Functions
 impl RLuaState {
-    pub fn set_global(&mut self, key: &str, func: extern fn(LuaState) -> i32) {
+    pub unsafe fn set_global(&mut self, key: &str, func: extern fn(LuaState) -> i32) {
         self.push_global();
         self.push_string(key);
         self.push_cfunc(func);
         self.set_table(-3);
     }
-    pub fn set_table(&mut self, stack_pos: i32) {
-        unsafe {
-            glua_set_table(self.raw_state,stack_pos)
-        }
+    pub unsafe fn set_table(&mut self, stack_pos: i32) {
+        glua_set_table(self.raw_state,stack_pos)
     }
 }
 
 /// Misc Lua Functions
 impl RLuaState {
-    pub fn call(&mut self, nargs: i32, nresults: i32) {
-        unsafe {
-            glua_call(self.raw_state,nargs,nresults)
-        }
+    pub unsafe fn call(&mut self, nargs: i32, nresults: i32) {
+        glua_call(self.raw_state,nargs,nresults)
     }
 }
 

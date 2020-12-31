@@ -10,10 +10,10 @@ using namespace GarrysMod::Lua;
 
 extern "C" {
 	// Get
-	const char* glua_get_string(lua_State* state, int stackPos) {
+	const char* glua_check_string(lua_State* state, int stackPos) {
 		return LUA->CheckString(stackPos);
 	}
-	double glua_get_number(lua_State* state, int stackPos) {
+	double glua_check_number(lua_State* state, int stackPos) {
 		return LUA->CheckNumber(stackPos);
 	}
 
