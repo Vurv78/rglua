@@ -46,7 +46,7 @@ pub struct RLSThreadable {
 /// This is the wrapper for the LuaState null ptr that we keep and use functions with.
 /// Here is a basic example of how to use the wrapper in a binary module
 /// ```
-/// use rglua::{RLuaState,LuaState,printgm};
+/// use rglua::{RLuaState,LuaState};
 /// #[no_mangle]
 /// unsafe extern fn gmod13_open(state: LuaState) -> i32 {
 ///     let mut wrapped = RLuaState::new(state);
@@ -54,13 +54,13 @@ pub struct RLSThreadable {
 ///     wrapped.get_global(&"print");
 ///     wrapped.push_string(&"Hello from rust!");
 ///     wrapped.call(1,0);
-///     printgm!(wrapped,"Also hello!");
+///     //printgm!(wrapped,"Also hello!");
 ///     0
 /// }
 /// #[no_mangle]
 /// unsafe extern fn gmod13_close(state: LuaState) -> i32 {
-///    let mut wrapped = RLuaState::new(state);
-///    printgm!(wrapped,"Goodbye!");
+///    let mut _wrapped = RLuaState::new(state);
+///    //printgm!(_wrapped,"Goodbye!");
 ///    0
 /// }
 /// ```
@@ -81,7 +81,7 @@ impl RLuaState {
 
 /// This is a struct that is returned from calling get_threadsafe on an RLuaState.
 /// ```
-/// use rglua::{RLuaState,printgm};
+/// use rglua::{RLuaState};
 /// let nullptr = std::ptr::null_mut();
 ///
 /// let rlua_state = RLuaState::new( nullptr ); // Fake Lua State object made from a null mutable ptr.
@@ -91,7 +91,9 @@ impl RLuaState {
 ///     std::thread::spawn(move || {
 ///         let mut rluastate = safe_instance.lock().unwrap();
 ///         unsafe {
-///             printgm!(rluastate,"Hello!");
+///             wrapped.get_global(&"print");
+///             wrapped.push_string(&"Hello from a thread!");
+///             wrapped.call(1,0);
 ///         };
 ///         // Do your multi-threaded stuff here
 ///     });
