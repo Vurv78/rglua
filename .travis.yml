@@ -1,0 +1,15 @@
+language: rust
+
+rust:
+  - stable
+  - beta
+  - nightly
+
+branches:
+  only:
+  - main
+
+jobs:
+  allow_failures:
+    - rust: nightly
+  fast_finish: true
