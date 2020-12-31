@@ -91,9 +91,9 @@ impl RLuaState {
 ///     std::thread::spawn(move || {
 ///         let mut rluastate = safe_instance.lock().unwrap();
 ///         unsafe {
-///             wrapped.get_global(&"print");
-///             wrapped.push_string(&"Hello from a thread!");
-///             wrapped.call(1,0);
+///             rluastate.get_global(&"print");
+///             rluastate.push_string(&"Hello from a thread!");
+///             rluastate.call(1,0);
 ///         };
 ///         // Do your multi-threaded stuff here
 ///     });
