@@ -24,21 +24,22 @@ More Info and example module (Not made with rglua): https://github.com/Vurv78/gm
 
 ## Example Module
 ```rust
- use rglua::{RLuaState,LuaState,printgm};
- #[no_mangle]
- unsafe extern fn gmod13_open(state: LuaState) -> i32 {
-     let mut wrapped = RLuaState::new(state);
-     // This is the same as doing 'printgm!(wrapped,"Hello from rust!")'
-     wrapped.get_global(&"print");
-     wrapped.push_string(&"Hello from rust!");
-     wrapped.call(1,0);
-     printgm!(wrapped,"Also hello!");
-     0
+// This code may not work for you because of printgm. In that case, don't import it and take away the instances of it until #1 is fixed.
+use rglua::{RLuaState,LuaState,printgm};
+#[no_mangle]
+unsafe extern fn gmod13_open(state: LuaState) -> i32 {
+    let mut wrapped = RLuaState::new(state);
+    // This is the same as doing 'printgm!(wrapped,"Hello from rust!")'
+    wrapped.get_global(&"print");
+    wrapped.push_string(&"Hello from rust!");
+    wrapped.call(1,0);
+    printgm!(wrapped,"Also hello!");
+    0
  }
  #[no_mangle]
  unsafe extern fn gmod13_close(state: LuaState) -> i32 {
-    let mut wrapped = RLuaState::new(state);
-    printgm!(wrapped,"Goodbye!");
+    let mut _wrapped = RLuaState::new(state);
+    printgm!(_wrapped,"Goodbye!");
     0
  }
 ```
