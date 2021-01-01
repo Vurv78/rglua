@@ -49,7 +49,7 @@ pub struct RLSThreadable {
 
 /// This is the wrapper for the LuaState null ptr that we keep and use functions with.
 /// Here is a basic example of how to use the wrapper in a binary module
-/// ```
+/// ```no_run
 /// use rglua::{RLuaState,LuaState};
 /// #[no_mangle]
 /// unsafe extern fn gmod13_open(state: LuaState) -> i32 {
@@ -84,7 +84,7 @@ impl RLuaState {
 }
 
 /// This is a struct that is returned from calling get_threadsafe on an RLuaState.
-/// ```
+/// ```no_run
 /// use rglua::{RLuaState};
 /// let nullptr = std::ptr::null_mut();
 ///
