@@ -24,6 +24,9 @@ extern {
     // Push
     fn glua_push_string(state: LuaState, string: *const CChar);
     fn glua_push_number(state: LuaState, n: CDouble);
+    fn glua_push_bool(state: LuaState, val: bool);
+    fn glua_push_nil(state: LuaState);
+
 
     // Push (Special)
     fn glua_push_global(state: LuaState);
@@ -33,6 +36,7 @@ extern {
     fn glua_set_table(state: LuaState, stack_pos: i32);
 
     fn glua_call(state: LuaState, nargs: i32, nresults: i32);
+    fn glua_arg_error(state: LuaState, argnum: i32, errmsg: *const CChar );
 }
 
 pub struct RLuaState {
@@ -139,13 +143,19 @@ impl RLuaState {
         glua_push_number(self.raw_state,num as CDouble)
     }
     pub unsafe fn push_string(&mut self, string: &str) {
-        glua_push_string(self.raw_state,CString::new(string).unwrap().as_ptr());
+        glua_push_string(self.raw_state,CString::new(string).unwrap().as_ptr())
     }
     pub unsafe fn push_cfunc(&mut self, func: extern fn(LuaState) -> i32) {
         glua_push_cfunc(self.raw_state,func)
     }
     pub unsafe fn push_global(&mut self) {
         glua_push_global(self.raw_state)
+    }
+    pub unsafe fn push_bool(&mut self, val: bool) {
+        glua_push_bool(self.raw_state,val)
+    }
+    pub unsafe fn push_nil(&mut self) {
+        glua_push_nil(self.raw_state)
     }
 }
 
@@ -166,6 +176,10 @@ impl RLuaState {
 impl RLuaState {
     pub unsafe fn call(&mut self, nargs: i32, nresults: i32) {
         glua_call(self.raw_state,nargs,nresults)
+    }
+    /// Throws an error at argument <argnum> with the error message of <errmsg>
+    pub unsafe fn arg_error(&mut self, argnum: i32, errmsg: &str) {
+        glua_arg_error(self.raw_state,argnum, CString::new(errmsg).unwrap().as_ptr() )
     }
 }
 

@@ -32,6 +32,12 @@ extern "C" {
 	void glua_push_number(lua_State* state, double number) {
 		LUA->PushNumber(number);
 	}
+	void glua_push_bool(lua_State* state, bool val) {
+		LUA->PushBool(val);
+	}
+	void glua_push_nil(lua_State* state) {
+		LUA->PushNil();
+	}
 
 	void glua_push_global(lua_State* state) {
 		LUA->PushSpecial(GarrysMod::Lua::SPECIAL_GLOB);
@@ -45,8 +51,11 @@ extern "C" {
 		LUA->SetTable(stackPos);
 	}
 
-	// Call
+	// Misc
 	void glua_call(lua_State* state, int nargs, int nresults) {
 		LUA->Call(nargs,nresults);
+	}
+	void glua_arg_error(lua_State* state, int argnum, const char* errmsg) {
+		LUA->ArgError(argnum,errmsg);
 	}
 }
