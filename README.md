@@ -1,4 +1,5 @@
 # rglua
+![TravisCI Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main)
 
 This is a Rust library that contains bindings for garrysmod binary module creation as well as more user-friendly interfaces to interact with lua states.
 
