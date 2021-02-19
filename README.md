@@ -22,7 +22,7 @@ Make sure you build to 32 bit if you want to use the module with srcds / on a lo
 ``cargo build --release --target=i686-pc-windows-msvc``
 
 Also do this if you have never compiled to 32 bit, to get rustup to install 32 bit versions of everything you need
-``rustup add target i686-pc-windows-msvc``
+``rustup target add i686-pc-windows-msvc``
 
 More Info and example module (Not made with rglua): https://github.com/Vurv78/gmod-rust-test
 
