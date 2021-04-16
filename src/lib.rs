@@ -15,7 +15,6 @@ extern crate dlopen;
 use dlopen::WrapperApi;
 use dlopen::wrapper::{Container, WrapperApi};
 
-
 #[derive(WrapperApi)]
 pub struct LuaSharedInterface {
     // GMOD
@@ -26,6 +25,8 @@ pub struct LuaSharedInterface {
     pub luaL_loadbuffer: extern fn(state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) -> CInt,
     pub luaL_loadstring: extern fn(state: LuaState, code: CharBuf) -> CInt,
     pub lua_pcall: extern fn(state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) -> CInt,
+    pub lua_call: extern fn(state: LuaState, nargs: CInt, nresults: CInt) -> CInt,
+    pub lua_cpcall: extern fn(state: LuaState, func: LuaCFunction, userdata: *mut CVoid ),
 
     // Setters
     pub lua_setfield: extern fn(state: LuaState, idx: CInt, name: CharBuf),
@@ -57,6 +58,9 @@ pub struct LuaSharedInterface {
     // Creation
     pub luaL_newstate: extern fn() -> LuaState,
     pub lua_createtable: extern fn(state: LuaState, narr: CInt, nrec: CInt),
+
+    // Raise Errors
+    pub luaL_typerror: extern fn(state: LuaState, narg: CInt, typename: CharBuf) -> CInt
 }
 
 // C++ Macros & Custom Functions
