@@ -3,6 +3,7 @@
 
 pub mod types;
 pub mod globals;
+pub mod helpers;
 
 use types::*;
 use globals::{
