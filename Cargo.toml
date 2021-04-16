@@ -1,13 +1,13 @@
 [package]
 name = "rglua"
-description = "GLua bindings for rust."
+description = "Rust bindings to the lua api for gmod binary module creation"
 version = "0.1.0"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
-build = "build.rs"
 keywords = ["glua","garrysmod","lua"]
 readme = "README.md"
 
 # Remember to make your output module a cdylib.
 
-[build-dependencies]
-cc = "1.0.65"
+[dependencies]
+dlopen = { git = "https://github.com/Vurv78/rust-dlopen", branch = "future", features = ["derive"], version = "0.1.8" }
+lazy_static = { version = "1.4.0" }
