@@ -87,24 +87,33 @@ impl LuaSharedInterface {
     }
 }
 
-lazy_static::lazy_static! {
-    pub static ref GMOD_PATH: PathBuf = std::env::current_dir().unwrap(); // D:\SteamLibrary\steamapps\common\GarrysMod for example.
+// Global Static Stuff
 
-    pub static ref BIN_PATH: PathBuf = {
-        let bin = Path::new(&*GMOD_PATH).join("bin");
-        if cfg!( target_arch = "x86_64" ) {
-            return bin.join("win64");
-        }else{
-            return bin;
-        }
-    };
-    pub static ref LUA_SHARED_PATH: PathBuf = Path::new( &*BIN_PATH ).join("lua_shared.dll");
+extern crate once_cell;
+use once_cell::sync::Lazy;
 
-    pub static ref LUA_SHARED: Container<LuaSharedInterface> = {
-        let dll_path = &*LUA_SHARED_PATH;
-        match unsafe {Container::load(dll_path)} {
-            Ok(lib) => lib,
-            Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
-        }
-    };
-}
+
+pub static GMOD_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    std::env::current_dir().unwrap() // D:\SteamLibrary\steamapps\common\GarrysMod for example.
+});
+
+pub static BIN_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    let bin = Path::new(&*GMOD_PATH).join("bin");
+    if cfg!( target_arch = "x86_64" ) {
+        return bin.join("win64");
+    } else {
+        return bin;
+    }
+});
+
+pub static LUA_SHARED_PATH: Lazy<PathBuf> = Lazy::new(|| {
+    Path::new( &*BIN_PATH ).join("lua_shared.dll")
+});
+
+pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
+    let dll_path = &*LUA_SHARED_PATH;
+    match unsafe {Container::load(dll_path)} {
+        Ok(lib) => lib,
+        Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
+    }
+});
