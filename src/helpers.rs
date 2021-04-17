@@ -3,6 +3,7 @@ use std::ffi::{CStr, CString};
 
 
 // Get a const char* from a &str
+#[macro_export]
 macro_rules! cstring {
     ($rstring:expr) => {
         {
@@ -13,6 +14,7 @@ macro_rules! cstring {
 }
 
 // Get a rust string from a const char*
+#[macro_export]
 macro_rules! rstring {
     ($cstring:expr) => {
         {
