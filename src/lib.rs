@@ -110,10 +110,13 @@ pub static LUA_SHARED_PATH: Lazy<PathBuf> = Lazy::new(|| {
     Path::new( &*BIN_PATH ).join("lua_shared.dll")
 });
 
-pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
+pub static LUA_SHARED: Lazy< Option< Container<LuaSharedInterface> > > = Lazy::new(|| {
     let dll_path = &*LUA_SHARED_PATH;
     match unsafe {Container::load(dll_path)} {
-        Ok(lib) => lib,
-        Err(why) => eprintln!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
+        Ok(lib) => Some(lib),
+        Err(why) => {
+            eprintln!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why);
+            None
+        }
     }
 });
