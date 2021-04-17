@@ -92,31 +92,57 @@ impl LuaSharedInterface {
 extern crate once_cell;
 use once_cell::sync::Lazy;
 
-
-pub static GMOD_PATH: Lazy<PathBuf> = Lazy::new(|| {
+// Keep separate in case needed by crates.
+pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    // Get the attached process. If you inject or run a binary module, will always GarrysMod directory.
     std::env::current_dir().expect("Couldn't get current running directory.") // D:\SteamLibrary\steamapps\common\GarrysMod for example.
 });
 
-pub static BIN_PATH: Lazy<PathBuf> = Lazy::new(|| {
-    let bin = Path::new(&*GMOD_PATH).join("bin");
+// Let me know if there's a neater way to do this.
+// Also if you need BIN_PATH back, try and re-implement it here.
+// I don't know how i'd go about it without it being very messy and not checking whether lua_shared exists or not.
+pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
+    let game_bin = Path::new(&*GMOD_DIR)
+        .join("bin");
+
     if cfg!( target_arch = "x86_64" ) {
-        return bin.join("win64");
+        // x64 Platform. srcds is always 32 bit so we don't have to try and check that here.
+        let full = game_bin
+            .join("win64")
+            .join("lua_shared.dll");
+
+        return match full.exists() {
+            true => Some(full),
+            false => None
+        }
     } else {
-        return bin;
+        // x86 Platform
+        let game_full = game_bin.join("lua_shared.dll");
+        if game_full.exists() {
+            return Some(game_full)
+        } else {
+            // Sometimes GarrysMod/garrysmod/bin contains lua_shared rather than just GarrysMod/bin.
+            // I think it only happens on srcds hosted servers. So this is needed for binary modules on the sv side.
+            let srcds_full = Path::new(&*GMOD_DIR)
+                .join("garrysmod")
+                .join("bin")
+                .join("lua_shared.dll");
+            match srcds_full.exists() {
+                true => Some(srcds_full),
+                false => None
+            }
+        }
     }
 });
 
-pub static LUA_SHARED_PATH: Lazy<PathBuf> = Lazy::new(|| {
-    Path::new( &*BIN_PATH ).join("lua_shared.dll")
-});
+pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
+    let dll_path = match &*LUA_SHARED_PATH {
+        Some(path) => path,
+        None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
+    };
 
-pub static LUA_SHARED: Lazy< Option< Container<LuaSharedInterface> > > = Lazy::new(|| {
-    let dll_path = &*LUA_SHARED_PATH;
     match unsafe {Container::load(dll_path)} {
-        Ok(lib) => Some(lib),
-        Err(why) => {
-            eprintln!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why);
-            None
-        }
+        Ok(lib) => lib,
+        Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
     }
 });
