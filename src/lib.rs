@@ -94,7 +94,7 @@ use once_cell::sync::Lazy;
 
 
 pub static GMOD_PATH: Lazy<PathBuf> = Lazy::new(|| {
-    std::env::current_dir().unwrap() // D:\SteamLibrary\steamapps\common\GarrysMod for example.
+    std::env::current_dir().expect("Couldn't get current running directory.") // D:\SteamLibrary\steamapps\common\GarrysMod for example.
 });
 
 pub static BIN_PATH: Lazy<PathBuf> = Lazy::new(|| {
@@ -114,6 +114,6 @@ pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
     let dll_path = &*LUA_SHARED_PATH;
     match unsafe {Container::load(dll_path)} {
         Ok(lib) => lib,
-        Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
+        Err(why) => eprintln!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
     }
 });
