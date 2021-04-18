@@ -1,204 +1,147 @@
-use std::ffi::{CStr, CString};
-use std::sync::{Arc, Mutex};
-
 // Types are in camelcase + C prefix
-pub type CVoid = std::ffi::c_void;
+#![allow(non_snake_case)]
 
-pub type CChar = i8;
-pub type CDouble = f64; // All lua numbers are doubles in Lua 5.1 (Glua)
+pub mod types;
+pub mod globals;
+pub mod helpers;
 
-pub type LuaNumber = CDouble;
-pub type LuaState = *mut CVoid; // Raw Lua state.
+use types::*;
+use globals::{
+    LUA_GLOBALSINDEX
+};
 
-// Extern raw functions that shouldn't need to be used by the lib user.
-extern {
-    // Get (Throws errors if given incorrect type)
-    fn glua_check_string(state: LuaState, stack_pos: i32) -> *const CChar;
-    fn glua_check_number(state: LuaState, stack_pos: i32) -> CDouble;
+use std::path::{Path, PathBuf};
+extern crate dlopen;
 
-    // Get (Misc)
-    fn glua_get_field(state: LuaState, stack_pos: i32, string: *const CChar);
+use dlopen::wrapper::{Container, WrapperApi};
 
-    fn glua_get_userdata(state: LuaState, stack_pos: i32);
+#[derive(WrapperApi)]
+pub struct LuaSharedInterface {
+    // GMOD
+    pub CreateInterface: extern fn(name: CharBuf, ret_code: CInt) -> *mut CVoid,
 
-    // Push
-    fn glua_push_string(state: LuaState, string: *const CChar);
-    fn glua_push_number(state: LuaState, n: CDouble);
-    fn glua_push_bool(state: LuaState, val: bool);
-    fn glua_push_nil(state: LuaState);
+    // Runners
+    pub luaL_loadbufferx: extern fn(state: LuaState, code: CharBuf, size: SizeT, id: CharBuf, mode: CharBuf) -> CInt,
+    pub luaL_loadbuffer: extern fn(state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) -> CInt,
+    pub luaL_loadstring: extern fn(state: LuaState, code: CharBuf) -> CInt,
+    pub lua_pcall: extern fn(state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) -> CInt,
+    pub lua_call: extern fn(state: LuaState, nargs: CInt, nresults: CInt) -> CInt,
+    pub lua_cpcall: extern fn(state: LuaState, func: LuaCFunction, userdata: *mut CVoid ),
 
+    // Setters
+    pub lua_setfield: extern fn(state: LuaState, idx: CInt, name: CharBuf),
+    pub lua_setmetatable: extern fn(state: LuaState, idx: CInt),
+    pub lua_settop: extern fn(state: LuaState, ind: CInt),
+    pub lua_setupvalue: extern fn(state: LuaState, fidx: CInt, idx: CInt) -> CharBuf,
+    pub lua_setfenv: extern fn(state: LuaState, idx: CInt) -> CInt,
+    pub lua_settable: extern fn(state: LuaState, idx: CInt),
 
-    // Push (Special)
-    fn glua_push_global(state: LuaState);
-    fn glua_push_cfunc(state: LuaState, func: extern fn(LuaState) -> i32);
+    // Getters
+    pub lua_gettable: extern fn(state: LuaState, idx: CInt),
+    pub lua_getfield: extern fn(state: LuaState, idx: CInt, key: CharBuf),
+    pub lua_getupvalue: extern fn(state: LuaState, fidx: CInt, idx: CInt) -> CharBuf,
+    pub lua_type: extern fn(state: LuaState, idx: CInt) -> CInt,
 
-    // Set
-    fn glua_set_table(state: LuaState, stack_pos: i32);
+    // Getters (with "to")
+    pub lua_tolstring: extern fn(state: LuaState, ind: CInt, size: SizeT) -> CharBuf,
+    pub lua_toboolean: extern fn(state: LuaState, idx: CInt) -> CInt,
+    pub lua_tocfunction: extern fn(state: LuaState, idx: CInt) -> LuaCFunction,
 
-    fn glua_call(state: LuaState, nargs: i32, nresults: i32);
-    fn glua_arg_error(state: LuaState, argnum: i32, errmsg: *const CChar );
+    // Push functions
+    pub lua_pushstring: extern fn(state: LuaState, s: CharBuf),
+    pub lua_pushlstring: extern fn(state: LuaState, s: CharBuf, sz: SizeT),
+    pub lua_pushnil: extern fn(state: LuaState),
+    pub lua_pushnumber: extern fn(state: LuaState, num: LuaNumber),
+    pub lua_pushvalue: extern fn(state: LuaState, idx: CInt),
+    pub lua_pushcclosure: extern fn(state: LuaState, fnc: LuaCFunction, idx: CInt),
+
+    // Creation
+    pub luaL_newstate: extern fn() -> LuaState,
+    pub lua_createtable: extern fn(state: LuaState, narr: CInt, nrec: CInt),
+
+    // Raise Errors
+    pub luaL_typerror: extern fn(state: LuaState, narg: CInt, typename: CharBuf) -> CInt
 }
 
-pub struct RLuaState {
-    raw_state: LuaState,
+// C++ Macros & Custom Functions
+impl LuaSharedInterface {
+    pub fn lua_pop(&self, state: LuaState, ind: CInt) {
+        self.lua_settop(state, -(ind)-1);
+    }
+
+    pub fn lua_isboolean(&self, state: LuaState, ind: CInt) -> bool {
+        self.lua_type(state, ind) == luatypes::BOOL
+    }
+
+    pub fn lua_setglobal(&self, state: LuaState, name: CharBuf) {
+        self.lua_setfield(state, LUA_GLOBALSINDEX, name);
+    }
+
+    pub fn lua_getglobal(&self, state: LuaState, name: CharBuf) {
+        self.lua_getfield(state, LUA_GLOBALSINDEX, name);
+    }
+
+    pub fn lua_pushcfunction(&self, state: LuaState, fnc: LuaCFunction) {
+        self.lua_pushcclosure(state, fnc, 0);
+    }
 }
 
-pub struct RLSThreadable {
-    rls_object: Arc< Mutex< RLuaState > >
-}
+// Global Static Stuff
 
-/// This is the wrapper for the LuaState null ptr that we keep and use functions with.
-/// Here is a basic example of how to use the wrapper in a binary module
-/// ```no_run
-/// use rglua::{RLuaState,LuaState};
-/// #[no_mangle]
-/// unsafe extern fn gmod13_open(state: LuaState) -> i32 {
-///     let mut wrapped = RLuaState::new(state);
-///     // This is the same as doing 'printgm!(wrapped,"Hello from rust!")'
-///     wrapped.get_global(&"print");
-///     wrapped.push_string(&"Hello from rust!");
-///     wrapped.call(1,0);
-///     //printgm!(wrapped,"Also hello!");
-///     0
-/// }
-/// #[no_mangle]
-/// unsafe extern fn gmod13_close(state: LuaState) -> i32 {
-///    let mut _wrapped = RLuaState::new(state);
-///    //printgm!(_wrapped,"Goodbye!");
-///    0
-/// }
-/// ```
+extern crate once_cell;
+use once_cell::sync::Lazy;
 
-impl RLuaState {
-    pub fn new(state: LuaState) -> RLuaState {
-        RLuaState {
-            raw_state: state,
+// Keep separate in case needed by crates.
+pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    // Get the attached process. If you inject or run a binary module, will always GarrysMod directory.
+    std::env::current_dir().expect("Couldn't get current running directory.") // D:\SteamLibrary\steamapps\common\GarrysMod for example.
+});
+
+// Let me know if there's a neater way to do this.
+// Also if you need BIN_PATH back, try and re-implement it here.
+// I don't know how i'd go about it without it being very messy and not checking whether lua_shared exists or not.
+pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
+    let game_bin = Path::new(&*GMOD_DIR)
+        .join("bin");
+
+    if cfg!( target_arch = "x86_64" ) {
+        // x64 Platform. srcds is always 32 bit so we don't have to try and check that here.
+        let full = game_bin
+            .join("win64")
+            .join("lua_shared.dll");
+
+        return match full.exists() {
+            true => Some(full),
+            false => None
+        }
+    } else {
+        // x86 Platform
+        let game_full = game_bin.join("lua_shared.dll");
+        if game_full.exists() {
+            return Some(game_full)
+        } else {
+            // Sometimes GarrysMod/garrysmod/bin contains lua_shared rather than just GarrysMod/bin.
+            // I think it only happens on srcds hosted servers. So this is needed for binary modules on the sv side.
+            let srcds_full = Path::new(&*GMOD_DIR)
+                .join("garrysmod")
+                .join("bin")
+                .join("lua_shared.dll");
+            return match srcds_full.exists() {
+                true => Some(srcds_full),
+                false => None
+            }
         }
     }
+});
 
-    pub fn get_threadsafe(self) -> RLSThreadable {
-        RLSThreadable {
-            rls_object: Arc::new(Mutex::new(self))
-        }
-    }
-}
-
-/// This is a struct that is returned from calling get_threadsafe on an RLuaState.
-/// ```no_run
-/// use rglua::{RLuaState};
-/// let nullptr = std::ptr::null_mut();
-///
-/// let rlua_state = RLuaState::new( nullptr ); // Fake Lua State object made from a null mutable ptr.
-/// let mut api = rlua_state.get_threadsafe();
-/// for _ in 1..10 {
-///     let safe_instance = api.get_clone();
-///     std::thread::spawn(move || {
-///         let mut rluastate = safe_instance.lock().unwrap();
-///         unsafe {
-///             rluastate.get_global(&"print");
-///             rluastate.push_string(&"Hello from a thread!");
-///             rluastate.call(1,0);
-///         };
-///         // Do your multi-threaded stuff here
-///     });
-/// }
-/// ```
-impl RLSThreadable {
-    pub fn get_clone(&mut self) -> Arc< Mutex< RLuaState > > {
-        Arc::clone(&self.rls_object)
-    }
-}
-
-unsafe impl Send for RLuaState {}
-
-/// This is a wrapper for a traditional lua state that will allow easy access to rglua's library.
-impl RLuaState {
-    /// This is actually luaL_checknumber, which automatically throws an error if they don't provide the number.
-    pub unsafe fn get_number(&mut self, stack_pos: i32) -> CDouble {
-        glua_check_number(self.raw_state,stack_pos)
-    }
-
-    /// This is actually luaL_checkstring, which automatically throws an error if they don't provide the number.
-    pub unsafe fn get_string(&mut self, stack_pos: i32) -> String {
-        let glua_chars = glua_check_string(self.raw_state,stack_pos);
-        CStr::from_ptr(glua_chars).to_string_lossy().into_owned()
-    }
-
-    pub unsafe fn get_field(&mut self, stack_pos: i32, key: &str) {
-        glua_get_field( self.raw_state, stack_pos, CString::new(key).unwrap().as_ptr() )
-    }
-
-    pub unsafe fn get_global(&mut self, key: &str) {
-        self.get_field(-10002,key)
-    }
-
-    pub unsafe fn get_userdata(&mut self, stack_pos: i32) {
-        glua_get_userdata(self.raw_state,stack_pos)
-    }
-}
-
-/// Lua Push Functions
-impl RLuaState {
-    pub unsafe fn push_number(&mut self, num: i32) {
-        glua_push_number(self.raw_state,num as CDouble)
-    }
-    pub unsafe fn push_string(&mut self, string: &str) {
-        glua_push_string(self.raw_state,CString::new(string).unwrap().as_ptr())
-    }
-    pub unsafe fn push_cfunc(&mut self, func: extern fn(LuaState) -> i32) {
-        glua_push_cfunc(self.raw_state,func)
-    }
-    pub unsafe fn push_global(&mut self) {
-        glua_push_global(self.raw_state)
-    }
-    pub unsafe fn push_bool(&mut self, val: bool) {
-        glua_push_bool(self.raw_state,val)
-    }
-    pub unsafe fn push_nil(&mut self) {
-        glua_push_nil(self.raw_state)
-    }
-}
-
-/// Lua Set Functions
-impl RLuaState {
-    pub unsafe fn set_global(&mut self, key: &str, func: extern fn(LuaState) -> i32) {
-        self.push_global();
-        self.push_string(key);
-        self.push_cfunc(func);
-        self.set_table(-3);
-    }
-    pub unsafe fn set_table(&mut self, stack_pos: i32) {
-        glua_set_table(self.raw_state,stack_pos)
-    }
-}
-
-/// Misc Lua Functions
-impl RLuaState {
-    pub unsafe fn call(&mut self, nargs: i32, nresults: i32) {
-        glua_call(self.raw_state,nargs,nresults)
-    }
-    /// Throws an error at argument <argnum> with the error message of <errmsg>
-    pub unsafe fn arg_error(&mut self, argnum: i32, errmsg: &str) {
-        glua_arg_error(self.raw_state,argnum, CString::new(errmsg).unwrap().as_ptr() )
-    }
-}
-
-
-
-#[allow(unused_macros)]
-#[macro_export]
-macro_rules! printgm {
-    // First arg is the lua state.
-    // Rest are varargs.
-    // Can be either a variable storing a str literal, or a referenced String / str variable
-    ($state:expr, $($x:expr),*) => {
-        {
-            let mut s = String::new();
-            $( s.push_str($x); )* // Push every arg to the end string
-            $state.get_global(&"print");
-            $state.push_string(&s);
-            // 1 arg, 0 results
-            $state.call(1, 0);
-        }
+pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
+    let dll_path = match &*LUA_SHARED_PATH {
+        Some(path) => path,
+        None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
     };
-}
+
+    return match unsafe {Container::load(dll_path)} {
+        Ok(lib) => lib,
+        Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
+    }
+});
