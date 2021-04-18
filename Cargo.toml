@@ -5,9 +5,15 @@ version = "0.1.0"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
 keywords = ["glua","garrysmod","lua"]
 readme = "README.md"
+license = "MIT"
 
 # Remember to make your output module a cdylib.
 
 [dependencies]
-dlopen = { git = "https://github.com/Vurv78/rust-dlopen", branch = "future", features = ["derive"], version = "0.1.8" }
+dlopen = { git = "https://github.com/Vurv78/rust-dlopen", branch = "future", features = ["derive"] }
 once_cell = "1.7.2"
+
+[workspace]
+members = [
+    "example-gmmodule"
+]
