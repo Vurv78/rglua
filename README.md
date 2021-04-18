@@ -1,4 +1,4 @@
-# rglua ![TravisCI Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main) [![License](https://img.shields.io/github/license/Vurv78/rglua?color=red)](https://opensource.org/licenses/Apache-2.0) [![github/Vurv78](https://discordapp.com/api/guilds/824727565948157963/widget.png)](https://discord.gg/epJFC6cNsw)
+# rglua [![Release Shield](https://img.shields.io/github/v/release/Vurv78/rglua)](https://github.com/Vurv78/rglua/releases/latest) ![Linux Build Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main) [![License](https://img.shields.io/github/license/Vurv78/rglua?color=red)](https://opensource.org/licenses/Apache-2.0) [![github/Vurv78](https://discordapp.com/api/guilds/824727565948157963/widget.png)](https://discord.gg/epJFC6cNsw)
 
 
 This is a Rust library that contains bindings for tinkering with the lua c api in garrysmod through bindings using rust-dlopen.
