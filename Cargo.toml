@@ -12,8 +12,3 @@ license = "MIT"
 [dependencies]
 dlopen = { git = "https://github.com/Vurv78/rust-dlopen", branch = "future", features = ["derive"] }
 once_cell = "1.7.2"
-
-[workspace]
-members = [
-    "example-gmmodule"
-]
