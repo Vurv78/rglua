@@ -19,10 +19,15 @@ rglua = { git = "https://github.com/Vurv78/rglua", branch = "main" }
 ```
 
 ## Building
-Make sure you build to 32 bit if you want to use the module with srcds / on a local server.
+After [installing rust, ](https://www.rust-lang.org/tools/install) just run  ``cargo build --release``.
+
+If you are building to 32 bit for srcds or non x64 garrysmod, first do:  
+``rustup target add i686-pc-windows-msvc`` in order to make rust download any 32 bit libraries needed to compile this.  
+
+And finally run:  
 ``cargo build --release --target=i686-pc-windows-msvc``
 
-Also do this if you have never compiled to 32 bit, to get rustup to install 32 bit versions of everything you need
+Also do this if you have never compiled to 32 bit, to get rustup to install 32 bit versions of everything you need  
 ``rustup target add i686-pc-windows-msvc``
 
 ## Notes
