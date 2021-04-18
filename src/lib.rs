@@ -13,7 +13,6 @@ use globals::{
 use std::path::{Path, PathBuf};
 extern crate dlopen;
 
-use dlopen::WrapperApi;
 use dlopen::wrapper::{Container, WrapperApi};
 
 #[derive(WrapperApi)]
@@ -127,7 +126,7 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
                 .join("garrysmod")
                 .join("bin")
                 .join("lua_shared.dll");
-            match srcds_full.exists() {
+            return match srcds_full.exists() {
                 true => Some(srcds_full),
                 false => None
             }
@@ -141,7 +140,7 @@ pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
         None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
     };
 
-    match unsafe {Container::load(dll_path)} {
+    return match unsafe {Container::load(dll_path)} {
         Ok(lib) => lib,
         Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
     }
