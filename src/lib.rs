@@ -26,7 +26,7 @@ pub struct LuaSharedInterface {
     pub luaL_loadstring: extern fn(state: LuaState, code: CharBuf) -> CInt,
     pub lua_pcall: extern fn(state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) -> CInt,
     pub lua_call: extern fn(state: LuaState, nargs: CInt, nresults: CInt) -> CInt,
-    pub lua_cpcall: extern fn(state: LuaState, func: LuaCFunction, userdata: *mut CVoid ),
+    pub lua_cpcall: extern fn(state: LuaState, func: LuaCFunction, userdata: *mut CVoid ) -> CInt,
 
     // Setters
     pub lua_setfield: extern fn(state: LuaState, idx: CInt, name: CharBuf),
