@@ -68,7 +68,6 @@ pub struct LuaSharedInterface {
     pub luaL_checknumber: extern fn(state: LuaState, narg: CInt) -> LuaNumber,
     pub luaL_checkstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
     pub luaL_checklstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
-    pub luaL_checklong: extern fn(state: LuaState, narg: CInt) -> CLong,
 
     // Type Checks that return nothing
     pub luaL_checkany: extern fn(state: LuaState, narg: CInt),
