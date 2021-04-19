@@ -6,9 +6,7 @@ pub mod globals;
 pub mod helpers;
 
 use types::*;
-use globals::{
-    LUA_GLOBALSINDEX
-};
+use globals::Lua;
 
 use std::path::{Path, PathBuf};
 extern crate dlopen;
@@ -24,9 +22,11 @@ pub struct LuaSharedInterface {
     pub luaL_loadbufferx: extern fn(state: LuaState, code: CharBuf, size: SizeT, id: CharBuf, mode: CharBuf) -> CInt,
     pub luaL_loadbuffer: extern fn(state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) -> CInt,
     pub luaL_loadstring: extern fn(state: LuaState, code: CharBuf) -> CInt,
+
     pub lua_pcall: extern fn(state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) -> CInt,
     pub lua_call: extern fn(state: LuaState, nargs: CInt, nresults: CInt) -> CInt,
     pub lua_cpcall: extern fn(state: LuaState, func: LuaCFunction, userdata: *mut CVoid ) -> CInt,
+    pub luaL_callmeta: extern fn(state: LuaState, obj: CInt, name: CharBuf) -> CInt,
 
     // Setters
     pub lua_setfield: extern fn(state: LuaState, idx: CInt, name: CharBuf),
@@ -41,11 +41,17 @@ pub struct LuaSharedInterface {
     pub lua_getfield: extern fn(state: LuaState, idx: CInt, key: CharBuf),
     pub lua_getupvalue: extern fn(state: LuaState, fidx: CInt, idx: CInt) -> CharBuf,
     pub lua_type: extern fn(state: LuaState, idx: CInt) -> CInt,
+    pub lua_typename: extern fn(state: LuaState, typeid: CInt) -> CharBuf, // To be used with the return value of lua_type
 
     // Getters (with "to")
     pub lua_tolstring: extern fn(state: LuaState, ind: CInt, size: SizeT) -> CharBuf,
     pub lua_toboolean: extern fn(state: LuaState, idx: CInt) -> CInt,
     pub lua_tocfunction: extern fn(state: LuaState, idx: CInt) -> LuaCFunction,
+    pub lua_tointeger: extern fn(state: LuaState, idx: CInt) -> LuaInteger,
+    pub lua_tonumber: extern fn(state: LuaState, idx: CInt) -> LuaNumber,
+    pub lua_topointer: extern fn(state: LuaState, idx: CInt) -> *mut CVoid,
+    pub lua_tothread: extern fn(state: LuaState, idx: CInt) -> LuaState,
+    pub lua_touserdata: extern fn(state: LuaState, idx: CInt) -> *mut CVoid,
 
     // Push functions
     pub lua_pushstring: extern fn(state: LuaState, s: CharBuf),
@@ -55,12 +61,35 @@ pub struct LuaSharedInterface {
     pub lua_pushvalue: extern fn(state: LuaState, idx: CInt),
     pub lua_pushcclosure: extern fn(state: LuaState, fnc: LuaCFunction, idx: CInt),
 
+    pub lua_checkstack: extern fn(state: LuaState, size: CInt, msg: CharBuf),
+    
+    // Type Checks
+    pub luaL_checkinteger: extern fn(state: LuaState, narg: CInt) -> LuaInteger,
+    pub luaL_checknumber: extern fn(state: LuaState, narg: CInt) -> LuaNumber,
+    pub luaL_checkstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
+    pub luaL_checklstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
+    pub luaL_checklong: extern fn(state: LuaState, narg: CInt) -> CLong,
+
+    // Type Checks that return nothing
+    pub luaL_checkany: extern fn(state: LuaState, narg: CInt),
+    pub luaL_checktype: extern fn(state: LuaState, narg: CInt, typeid: CInt),
+    pub luaL_checkudata: extern fn(state: LuaState, narg: CInt, len: SizeT),
+    pub luaL_argcheck: extern fn(state: LuaState, cond: CInt, narg: CInt, msg: CharBuf),
+
     // Creation
     pub luaL_newstate: extern fn() -> LuaState,
     pub lua_createtable: extern fn(state: LuaState, narr: CInt, nrec: CInt),
 
-    // Raise Errors
-    pub luaL_typerror: extern fn(state: LuaState, narg: CInt, typename: CharBuf) -> CInt
+    // JIT
+    // Returns 1 for success, 0 for failure
+    pub luaJIT_setmode: extern fn(state: LuaState, idx: CInt, jit_mode: CInt) -> CInt,
+
+    // Coroutines / Yielding
+    pub lua_yield: extern fn(state: LuaState, nresults: CInt) -> CInt,
+    pub lua_status: extern fn(state: LuaState) -> CInt,
+
+    // Raising Errors
+    pub luaL_typerror: extern fn(state: LuaState, narg: CInt, typename: CharBuf) -> CInt,
 }
 
 // C++ Macros & Custom Functions
@@ -70,19 +99,23 @@ impl LuaSharedInterface {
     }
 
     pub fn lua_isboolean(&self, state: LuaState, ind: CInt) -> bool {
-        self.lua_type(state, ind) == luatypes::BOOL
+        self.lua_type(state, ind) == Lua::Type::Bool as i32
     }
 
     pub fn lua_setglobal(&self, state: LuaState, name: CharBuf) {
-        self.lua_setfield(state, LUA_GLOBALSINDEX, name);
+        self.lua_setfield(state, Lua::GLOBALSINDEX, name);
     }
 
     pub fn lua_getglobal(&self, state: LuaState, name: CharBuf) {
-        self.lua_getfield(state, LUA_GLOBALSINDEX, name);
+        self.lua_getfield(state, Lua::GLOBALSINDEX, name);
     }
 
     pub fn lua_pushcfunction(&self, state: LuaState, fnc: LuaCFunction) {
         self.lua_pushcclosure(state, fnc, 0);
+    }
+
+    pub fn lua_tostring(&self, state: LuaState, idx: CInt) -> CharBuf {
+        self.lua_tolstring(state, idx, 0)
     }
 }
 
