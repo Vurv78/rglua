@@ -10,8 +10,8 @@ pub mod Lua {
     pub static AUTHORS: &'static str = "R. Ierusalimschy, L. H. de Figueiredo & W. Celes";
 
     pub static REGISTRYINDEX: CInt = -10000;
-    pub static ENVIRONINDEX: CInt = -10000;
-    pub static GLOBALSINDEX: CInt = -10000;
+    pub static ENVIRONINDEX: CInt = -10001;
+    pub static GLOBALSINDEX: CInt = -10002;
 
     pub static MULTRET: CInt = -1;
     pub static SIGNATURE: &'static str = "\x1bLua";

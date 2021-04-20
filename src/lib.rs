@@ -192,13 +192,8 @@ pub static LUA_SHAREDR: Lazy< Result< LuaSharedLibrary, dlopen::Error> > = Lazy:
 });
 
 pub static LUA_SHARED: Lazy< &LuaSharedLibrary > = Lazy::new(|| {
-    let dll_path = match &*LUA_SHARED_PATH {
-        Some(path) => path,
-        None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
-    };
-
     match &*LUA_SHAREDR {
         Ok(lib) => lib,  // We shouldn't need a mutable LuaSharedLibrary.
-        Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
+        Err(why) => panic!("Couldn't load lua_shared.dll. Error Reason: {}. Report this on github.", why)
     }
 });
