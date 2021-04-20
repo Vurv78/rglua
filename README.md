@@ -48,7 +48,7 @@ use rglua::{
 
 #[no_mangle]
 pub extern fn gmod13_open(state: LuaState) -> i32 {
-    let shared = &*LUA_SHARED;
+    let shared = *LUA_SHARED;
     shared.lua_getglobal(state, cstring!("print") );
     shared.lua_pushstring(state, cstring!("Hello from rust!") );
     shared.lua_call(state, 1, 0);
