@@ -181,14 +181,26 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
     }
 });
 
-pub static LUA_SHARED: Lazy< Container<LuaSharedInterface> > = Lazy::new(|| {
+type LuaSharedLibrary = Container<LuaSharedInterface>;
+
+// Returns the underlying result of trying to create a luasharedinterface.
+// Useful if you don't want your program to panic at all.
+pub static LUA_SHAREDR: Lazy< Result< LuaSharedLibrary, dlopen::Error> > = Lazy::new(|| {
+    let dll_path = match &*LUA_SHARED_PATH {
+        Some(path) => path,
+        None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
+    };
+    unsafe {Container::load(dll_path)}
+});
+
+pub static LUA_SHARED: Lazy< &LuaSharedLibrary > = Lazy::new(|| {
     let dll_path = match &*LUA_SHARED_PATH {
         Some(path) => path,
         None => panic!("Couldn't get lua_shared location. Make sure it's at GarrysMod/bin/ or GarrysMod/garrysmod/bin/")
     };
 
-    return match unsafe {Container::load(dll_path)} {
-        Ok(lib) => lib,
+    match &*LUA_SHAREDR {
+        Ok(lib) => lib,  // We shouldn't need a mutable LuaSharedLibrary.
         Err(why) => panic!("Path DLL tried to load: {}, Error Reason: {}. Report this on github.", dll_path.display(), why)
     }
 });
