@@ -35,9 +35,14 @@ pub struct LuaSharedInterface {
     pub lua_setupvalue: extern fn(state: LuaState, fidx: CInt, idx: CInt) -> CharBuf,
     pub lua_setfenv: extern fn(state: LuaState, idx: CInt) -> CInt,
     pub lua_settable: extern fn(state: LuaState, idx: CInt),
+    pub lua_rawset: extern fn(state: LuaState, idx: CInt), // lua_settable but no metamethods called
+    pub lua_rawseti: extern fn(state: LuaState, idx: CInt, n: CInt), // t[n] = v
 
     // Getters
     pub lua_gettable: extern fn(state: LuaState, idx: CInt),
+    pub lua_rawget: extern fn(state: LuaState, idx: CInt), // lua_gettable but no metamethods called
+    pub lua_rawgeti: extern fn(state: LuaState, idx: CInt, n: CInt), // lua_gettable but no metamethods called
+
     pub lua_getfield: extern fn(state: LuaState, idx: CInt, key: CharBuf),
     pub lua_getupvalue: extern fn(state: LuaState, fidx: CInt, idx: CInt) -> CharBuf,
     pub lua_type: extern fn(state: LuaState, idx: CInt) -> CInt,
@@ -73,19 +78,26 @@ pub struct LuaSharedInterface {
     pub luaL_checkany: extern fn(state: LuaState, narg: CInt),
     pub luaL_checktype: extern fn(state: LuaState, narg: CInt, typeid: CInt),
     pub luaL_checkudata: extern fn(state: LuaState, narg: CInt, len: SizeT),
-    pub luaL_argcheck: extern fn(state: LuaState, cond: CInt, narg: CInt, msg: CharBuf),
 
     // Creation
     pub luaL_newstate: extern fn() -> LuaState,
     pub lua_createtable: extern fn(state: LuaState, narr: CInt, nrec: CInt),
 
+    // Destruction
+    pub lua_close: extern fn(state: LuaState), // Destroys the lua state
+
     // JIT
     // Returns 1 for success, 0 for failure
     pub luaJIT_setmode: extern fn(state: LuaState, idx: CInt, jit_mode: CInt) -> CInt,
 
-    // Coroutines / Yielding
+    // Coroutines
     pub lua_yield: extern fn(state: LuaState, nresults: CInt) -> CInt,
     pub lua_status: extern fn(state: LuaState) -> CInt,
+    pub lua_resume_real: extern fn(state: LuaState, narg: CInt) -> CInt,
+
+    // Comparison
+    pub lua_equal: extern fn(state: LuaState, ind1: CInt, ind2: CInt) -> CInt, // Returns 1 or 0 bool
+    pub lua_rawequal: extern fn(state: LuaState, ind1: CInt, ind2: CInt) -> CInt,
 
     // Raising Errors
     pub luaL_typerror: extern fn(state: LuaState, narg: CInt, typename: CharBuf) -> CInt,
@@ -115,6 +127,9 @@ impl LuaSharedInterface {
 
     pub fn lua_tostring(&self, state: LuaState, idx: CInt) -> CharBuf {
         self.lua_tolstring(state, idx, 0)
+    }
+    pub fn lua_resume(&self, state: LuaState, narg: CInt) -> CInt {
+        self.lua_resume_real(state, narg)
     }
 }
 

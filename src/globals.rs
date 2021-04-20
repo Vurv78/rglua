@@ -3,6 +3,12 @@ use crate::types::*;
 pub mod Lua {
     use super::CInt;
 
+    pub static VERSION: &'static str = "Lua 5.1";
+    pub static RELEASE: &'static str = "Lua 5.1.4";
+    pub static VERSION_NUM: CInt = 501;
+    pub static COPYRIGHT: &'static str = "Copyright (C) 1994-2008 Lua.org, PUC-Rio";
+    pub static AUTHORS: &'static str = "R. Ierusalimschy, L. H. de Figueiredo & W. Celes";
+
     pub static REGISTRYINDEX: CInt = -10000;
     pub static ENVIRONINDEX: CInt = -10000;
     pub static GLOBALSINDEX: CInt = -10000;
