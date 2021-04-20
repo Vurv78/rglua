@@ -22,3 +22,22 @@ macro_rules! rstring {
         }
     }
 }
+
+#[allow(unused_macros)]
+#[macro_export]
+/// Like println!, however it prints to the gmod server's console.
+macro_rules! printgm {
+    // First arg is the lua state.
+    // Rest are varargs.
+    // Can be either a variable storing a str literal, or a referenced String / str variable
+    ($state:expr, $($x:expr),*) => {
+        {
+            let stmt = format!( $($x,)* ); // Everything past the state will be as if it were inside a format! call.
+            let lib = *rglua::LUA_SHARED;
+            lib.lua_getglobal($state, rglua::cstring!("print") );
+            lib.lua_pushstring($state, rglua::cstring!(stmt) );
+            // 1 arg, 0 results
+            lib.lua_call($state, 1, 0);
+        }
+    };
+}
