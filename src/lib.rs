@@ -65,16 +65,14 @@ pub struct LuaSharedInterface {
     pub lua_pushnumber: extern fn(state: LuaState, num: LuaNumber),
     pub lua_pushvalue: extern fn(state: LuaState, idx: CInt),
     pub lua_pushcclosure: extern fn(state: LuaState, fnc: LuaCFunction, idx: CInt),
-
-    pub lua_checkstack: extern fn(state: LuaState, size: CInt, msg: CharBuf),
     
     // Type Checks
     pub luaL_checkinteger: extern fn(state: LuaState, narg: CInt) -> LuaInteger,
     pub luaL_checknumber: extern fn(state: LuaState, narg: CInt) -> LuaNumber,
-    pub luaL_checkstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
     pub luaL_checklstring: extern fn(state: LuaState, narg: CInt) -> CharBuf,
 
     // Type Checks that return nothing
+    pub luaL_checkstack: extern fn(state: LuaState, size: CInt, msg: CharBuf),
     pub luaL_checkany: extern fn(state: LuaState, narg: CInt),
     pub luaL_checktype: extern fn(state: LuaState, narg: CInt, typeid: CInt),
     pub luaL_checkudata: extern fn(state: LuaState, narg: CInt, len: SizeT),
