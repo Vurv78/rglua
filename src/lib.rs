@@ -146,7 +146,7 @@ pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
 pub static BIN_DIR: Lazy<PathBuf> = Lazy::new(|| {
     let gm_dir = &*GMOD_DIR;
     match gm_dir.join("bin") {
-        bin if bin.exists() & bin.join("lua_shared.dll").exists() => bin, // GarrysMod/bin
+        bin if bin.exists() && bin.join("lua_shared.dll").exists() => bin, // GarrysMod/bin
         _ => {
             let garrysmod_bin = gm_dir.join("garrysmod").join("bin");
             if !garrysmod_bin.exists() {
