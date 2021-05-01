@@ -142,10 +142,11 @@ pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
     std::env::current_dir().expect("Couldn't get current running directory.") // D:\SteamLibrary\steamapps\common\GarrysMod for example.
 });
 
+/// Where the lua_shared file binary is.
 pub static BIN_DIR: Lazy<PathBuf> = Lazy::new(|| {
     let gm_dir = &*GMOD_DIR;
     match gm_dir.join("bin") {
-        bin if bin.exists() => bin, // GarrysMod/bin
+        bin if bin.exists() & bin.join("lua_shared.dll").exists() => bin, // GarrysMod/bin
         _ => {
             let garrysmod_bin = gm_dir.join("garrysmod").join("bin");
             if !garrysmod_bin.exists() {
@@ -170,14 +171,20 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 
         return match full.exists() {
             true => Some(full),
-            false => None
+            false => {
+                eprintln!("x64, {}", full.display());
+                None
+            }
         }
     } else {
         // x86 Platform
         let game_full = game_bin.join("lua_shared.dll");
         return match game_full.exists() {
             true => Some(game_full),
-            false => None
+            false => {
+                eprintln!("game_full, {}", game_full.display());
+                None
+            }
         }
     }
 });
