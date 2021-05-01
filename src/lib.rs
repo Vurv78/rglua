@@ -8,7 +8,7 @@ pub mod helpers;
 use types::*;
 use globals::Lua;
 
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 extern crate dlopen;
 
 use dlopen::wrapper::{Container, WrapperApi};
@@ -65,7 +65,7 @@ pub struct LuaSharedInterface {
     pub lua_pushnumber: extern fn(state: LuaState, num: LuaNumber),
     pub lua_pushvalue: extern fn(state: LuaState, idx: CInt),
     pub lua_pushcclosure: extern fn(state: LuaState, fnc: LuaCFunction, idx: CInt),
-    
+
     // Type Checks
     pub luaL_checkinteger: extern fn(state: LuaState, narg: CInt) -> LuaInteger,
     pub luaL_checknumber: extern fn(state: LuaState, narg: CInt) -> LuaNumber,
@@ -142,12 +142,25 @@ pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
     std::env::current_dir().expect("Couldn't get current running directory.") // D:\SteamLibrary\steamapps\common\GarrysMod for example.
 });
 
+pub static BIN_DIR: Lazy<PathBuf> = Lazy::new(|| {
+    let gm_dir = &*GMOD_DIR;
+    match gm_dir.join("bin") {
+        bin if bin.exists() => bin, // GarrysMod/bin
+        _ => {
+            let garrysmod_bin = gm_dir.join("garrysmod").join("bin");
+            if !garrysmod_bin.exists() {
+                panic!("Couldn't find a bin folder in GarrysMod/bin or GarrysMod/garrysmod/bin.");
+            }
+            garrysmod_bin // GarrysMod/garrysmod/bin
+        },
+    }
+});
+
 // Let me know if there's a neater way to do this.
 // Also if you need BIN_PATH back, try and re-implement it here.
 // I don't know how i'd go about it without it being very messy and not checking whether lua_shared exists or not.
 pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
-    let game_bin = Path::new(&*GMOD_DIR)
-        .join("bin");
+    let game_bin = &*BIN_DIR;
 
     if cfg!( target_arch = "x86_64" ) {
         // x64 Platform. srcds is always 32 bit so we don't have to try and check that here.
@@ -162,19 +175,9 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
     } else {
         // x86 Platform
         let game_full = game_bin.join("lua_shared.dll");
-        if game_full.exists() {
-            return Some(game_full)
-        } else {
-            // Sometimes GarrysMod/garrysmod/bin contains lua_shared rather than just GarrysMod/bin.
-            // I think it only happens on srcds hosted servers. So this is needed for binary modules on the sv side.
-            let srcds_full = Path::new(&*GMOD_DIR)
-                .join("garrysmod")
-                .join("bin")
-                .join("lua_shared.dll");
-            return match srcds_full.exists() {
-                true => Some(srcds_full),
-                false => None
-            }
+        return match game_full.exists() {
+            true => Some(game_full),
+            false => None
         }
     }
 });
