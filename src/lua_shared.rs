@@ -147,41 +147,41 @@ expose_symbol!( luaL_typerror, CInt, (state: LuaState, narg: CInt, typename: Cha
 #[macro_export]
 macro_rules! lua_pop {
 	($state:expr, $ind:literal) => {
-		lua_settop( $state, -($ind)-1 );
+		rglua::lua_shared::lua_settop( $state, -($ind)-1 );
 	}
 }
 
 #[macro_export]
 macro_rules! lua_getglobal {
 	($state:expr, $name:expr) => {
-		lua_getfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
+		rglua::lua_shared::lua_getfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
 	}
 }
 
 #[macro_export]
 macro_rules! lua_setglobal {
 	($state:expr, $name:expr) => {
-		lua_setfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
+		rglua::lua_shared::lua_setfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
 	}
 }
 
 #[macro_export]
 macro_rules! lua_pushcfunction {
 	($state:expr, $fnc:expr) => {
-		lua_pushcclosure($state, $fnc, 0);
+		rglua::lua_shared::lua_pushcclosure($state, $fnc, 0);
 	}
 }
 
 #[macro_export]
 macro_rules! lua_tostring {
 	($state:expr, $idx:expr) => {
-		lua_tolstring($state, $idx, 0)
+		rglua::lua_shared::lua_tolstring($state, $idx, 0)
 	}
 }
 
 #[macro_export]
 macro_rules! lua_resume {
 	($state:expr, $narg:expr) => {
-		lua_resume_real($state, $narg)
+		rglua::lua_shared::lua_resume_real($state, $narg)
 	}
 }
