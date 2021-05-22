@@ -167,7 +167,7 @@ macro_rules! lua_setglobal {
 
 #[macro_export]
 macro_rules! lua_pushcfunction {
-	($state:expr, $name:expr, $fnc:expr) => {
+	($state:expr, $fnc:expr) => {
 		lua_pushcclosure($state, $fnc, 0);
 	}
 }

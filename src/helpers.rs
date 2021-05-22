@@ -33,11 +33,10 @@ macro_rules! printgm {
     ($state:expr, $($x:expr),*) => {
         {
             let stmt = format!( $($x,)* ); // Everything past the state will be as if it were inside a format! call.
-            let lib = *rglua::LUA_SHARED;
-            lib.lua_getglobal($state, rglua::cstring!("print") );
-            lib.lua_pushstring($state, rglua::cstring!(stmt) );
+            rglua::lua_getglobal!($state, rglua::cstring!("print") );
+            rglua::lua_shared::lua_pushstring($state, rglua::cstring!(stmt) );
             // 1 arg, 0 results
-            lib.lua_call($state, 1, 0);
+            rglua::lua_shared::lua_call($state, 1, 0);
         }
     };
 }
