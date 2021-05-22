@@ -11,7 +11,7 @@ macro_rules! cstring {
     }
 }
 
-// Get a rust string from a const char*
+// Get a rust &str from a const char*
 #[macro_export]
 macro_rules! rstring {
     ($cstring:expr) => {
