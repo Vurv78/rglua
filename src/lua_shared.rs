@@ -104,11 +104,15 @@ expose_symbol!( lua_touserdata, *mut CVoid, (state: LuaState, idx: CInt) );
 
 // Push functions
 expose_symbol!( lua_pushstring, (), (state: LuaState, s: CharBuf) );
+expose_symbol!( lua_pushboolean, (), (state: LuaState, s: CInt) );
 expose_symbol!( lua_pushlstring, (), (state: LuaState, s: CharBuf, sz: SizeT) );
 expose_symbol!( lua_pushnil, (), (state: LuaState) );
 expose_symbol!( lua_pushnumber, (), (state: LuaState, num: LuaNumber) );
 expose_symbol!( lua_pushvalue, (), (state: LuaState, idx: CInt) );
 expose_symbol!( lua_pushcclosure, (), (state: LuaState, fnc: LuaCFunction, idx: CInt) );
+expose_symbol!( lua_pushlightuserdata, (), (state: LuaState, p: *mut CVoid) );
+expose_symbol!( lua_pushthread, (), (state: LuaState) );
+expose_symbol!( lua_pushfstring, CharBuf, (state: LuaState, fmt: CharBuf, ...) );
 
 // Type Checks
 expose_symbol!( luaL_checkinteger, LuaInteger, (state: LuaState, narg: CInt) );
