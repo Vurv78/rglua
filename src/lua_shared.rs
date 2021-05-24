@@ -40,11 +40,10 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 	Some(full)
 });
 
-use const_cstr::const_cstr;
 macro_rules! expose_symbol {
 	($name:ident, $ret:ty, $($args:tt)*) => {
 		pub const $name: Lazy<extern fn$($args)* -> $ret> = Lazy::new(|| {
-			unsafe { LUA_SHARED_RAW.symbol_cstr( const_cstr! ( stringify!($name) ).as_cstr() ) }.unwrap()
+			unsafe { LUA_SHARED_RAW.symbol( stringify!($name) ) }.unwrap()
 		});
 	};
 }

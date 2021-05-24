@@ -13,4 +13,3 @@ edition = "2018"
 [dependencies]
 dlopen = "0.1.8"
 once_cell = "1.7.2"
-const-cstr = "0.3.0"
