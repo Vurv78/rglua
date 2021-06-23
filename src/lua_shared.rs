@@ -52,7 +52,6 @@ macro_rules! expose_symbol {
 	};
 }
 
-// dlopen raw lua_shared.dll library. Don't use this unless you know what you're doing.
 pub const LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
 	let path = LUA_SHARED_PATH.as_ref().expect("Couldn't find lua_shared.dll!");
 	unsafe { Library::new(path).expect("Could not open library") }
@@ -151,44 +150,32 @@ expose_symbol!( lua_rawequal, CInt, (state: LuaState, ind1: CInt, ind2: CInt) );
 // Raising Errors
 expose_symbol!( luaL_typerror, CInt, (state: LuaState, narg: CInt, typename: CharBuf) );
 
-#[macro_export]
-macro_rules! lua_pop {
-	($state:expr, $ind:literal) => {
-		rglua::lua_shared::lua_settop( $state, -($ind)-1 );
-	}
+#[inline(always)]
+pub fn lua_pop(state: LuaState, ind: CInt) {
+	lua_settop( state, -(ind)-1 );
 }
 
-#[macro_export]
-macro_rules! lua_getglobal {
-	($state:expr, $name:expr) => {
-		rglua::lua_shared::lua_getfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
-	}
+#[inline(always)]
+pub fn lua_getglobal(state: LuaState, name: CharBuf) {
+	lua_getfield(state, GLOBALSINDEX, name);
 }
 
-#[macro_export]
-macro_rules! lua_setglobal {
-	($state:expr, $name:expr) => {
-		rglua::lua_shared::lua_setfield($state, rglua::globals::Lua::GLOBALSINDEX, $name);
-	}
+#[inline(always)]
+pub fn lua_setglobal(state: LuaState, name: CharBuf) {
+	lua_setfield(state, GLOBALSINDEX, name);
 }
 
-#[macro_export]
-macro_rules! lua_pushcfunction {
-	($state:expr, $fnc:expr) => {
-		rglua::lua_shared::lua_pushcclosure($state, $fnc, 0);
-	}
+#[inline(always)]
+pub fn lua_pushcfunction(state: LuaState, fnc: LuaCFunction) {
+	lua_pushcclosure(state, fnc, 0);
 }
 
-#[macro_export]
-macro_rules! lua_tostring {
-	($state:expr, $idx:expr) => {
-		rglua::lua_shared::lua_tolstring($state, $idx, 0)
-	}
+#[inline(always)]
+pub fn lua_tostring(state: LuaState, idx: CInt) -> CharBuf {
+	lua_tolstring(state, idx, 0)
 }
 
-#[macro_export]
-macro_rules! lua_resume {
-	($state:expr, $narg:expr) => {
-		rglua::lua_shared::lua_resume_real($state, $narg)
-	}
+#[inline(always)]
+pub fn lua_resume(state: LuaState, narg: CInt) -> CInt {
+	lua_resume_real(state, narg)
 }

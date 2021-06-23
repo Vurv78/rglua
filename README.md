@@ -1,6 +1,6 @@
 # rglua [![Release Shield](https://img.shields.io/github/v/release/Vurv78/rglua)](https://github.com/Vurv78/rglua/releases/latest) ![Linux Build Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main) [![License](https://img.shields.io/github/license/Vurv78/rglua?color=red)](https://opensource.org/licenses/Apache-2.0) [![github/Vurv78](https://img.shields.io/discord/824727565948157963?color=7289DA&label=chat&logo=discord)](https://discord.gg/epJFC6cNsw)
 
-This is a crate that contains bindings for using the lua c api in garrysmod through bindings using rust-dlopen.
+This is a crate that contains bindings for using the lua c api in garrysmod through bindings using the rust libloading library.
 Can be used for either binary modules or just manual injections into gmod, like with [Autorun-rs](https://github.com/Vurv78/Autorun-rs)
 
 This works by finding a ``lua_shared.dll`` file relative to the currently running program, so you need to make sure your file is either in ``GarrysMod/bin/`` or ``GarrysMod/garrysmod/bin`` for srcds servers. The library will panic if the file is not found.
@@ -39,15 +39,14 @@ Also do this if you have never compiled to 32 bit, to get rustup to install 32 b
 ## Example Module
 ```rust
 use rglua::{
-	types::LuaState,
+	types::{ LuaState, CharBuf },
 	cstring,
-	lua_shared::*,
-	lua_getglobal,
+	lua_shared::*
 };
 
 #[no_mangle]
 pub extern fn gmod13_open(state: LuaState) -> i32 {
-	lua_getglobal!( state, cstring!("print") );
+	lua_getglobal( state, b"print\0".as_ptr() as CharBuf );
 	lua_pushstring( state, cstring!("Hello from rust!") );
 	lua_call( state, 1, 0 );
 	0
