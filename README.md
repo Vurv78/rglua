@@ -62,6 +62,3 @@ pub extern fn gmod13_close(_state: LuaState) -> i32 {
 ## Acknowledgements
 ### [garrysmod_common](https://github.com/danielga/garrysmod_common)
 This is heavily based off of garrysmod_common, in how we export the lua_shared functions and trying to replicate everything from the Lua C Api.
-
-### [rust-dlopen](https://github.com/szymonwieloch/rust-dlopen)
-Thanks to this library we're able to make rglua cross platform.

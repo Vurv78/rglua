@@ -1,7 +1,7 @@
 #![allow(unused)]
 #![macro_export]
 
-use dlopen::raw::Library;
+use libloading::Library;
 
 // Keep separate in case needed by crates.
 pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
@@ -43,7 +43,11 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 macro_rules! expose_symbol {
 	($name:ident, $ret:ty, $($args:tt)*) => {
 		pub const $name: Lazy<extern fn$($args)* -> $ret> = Lazy::new(|| {
-			unsafe { LUA_SHARED_RAW.symbol( stringify!($name) ) }.unwrap()
+			unsafe {
+				let lib = &*LUA_SHARED_RAW;
+				let v: libloading::Symbol<extern fn$($args)* -> $ret> = lib.get( stringify!($name).as_bytes() ).unwrap();
+				std::mem::transmute(v)
+			}
 		});
 	};
 }
@@ -51,7 +55,7 @@ macro_rules! expose_symbol {
 // dlopen raw lua_shared.dll library. Don't use this unless you know what you're doing.
 pub const LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
 	let path = LUA_SHARED_PATH.as_ref().expect("Couldn't find lua_shared.dll!");
-	Library::open(path).expect("Could not open library")
+	unsafe { Library::new(path).expect("Could not open library") }
 });
 
 use std::path::PathBuf;

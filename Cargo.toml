@@ -11,5 +11,5 @@ edition = "2018"
 # Remember to make your output module a cdylib.
 
 [dependencies]
-dlopen = "0.1.8"
+libloading = "0.7.0"
 once_cell = "1.7.2"
