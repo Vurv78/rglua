@@ -60,12 +60,14 @@ pub const LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
 use std::path::PathBuf;
 use once_cell::sync::Lazy;
 use crate::types::*;
-use crate::globals::Lua::GLOBALSINDEX;
+use crate::globals::Lua::{self, GLOBALSINDEX};
 
 // Load lua Code
 expose_symbol!( luaL_loadbufferx, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf, mode: CharBuf) );
 expose_symbol!( luaL_loadbuffer, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) );
 expose_symbol!( luaL_loadstring, CInt, (state: LuaState, code: CharBuf) );
+expose_symbol!( luaL_loadfile, CInt, (state: LuaState, filename: CharBuf) );
+expose_symbol!( luaL_loadfilex, CInt, (state: LuaState, filename: CharBuf, mode: CharBuf) );
 
 // Call lua code
 expose_symbol!( lua_pcall, CInt, (state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) );
@@ -119,7 +121,7 @@ expose_symbol!( lua_pushfstring, CharBuf, (state: LuaState, fmt: CharBuf, ...) )
 // Type Checks
 expose_symbol!( luaL_checkinteger, LuaInteger, (state: LuaState, narg: CInt) );
 expose_symbol!( luaL_checknumber, LuaNumber, (state: LuaState, narg: CInt) );
-expose_symbol!( luaL_checklstring, CharBuf, (state: LuaState, narg: CInt) );
+expose_symbol!( luaL_checklstring, CharBuf, (state: LuaState, narg: CInt, len: SizeT) );
 
 // Type Checks that return nothing
 expose_symbol!( luaL_checkstack, (), (state: LuaState, size: CInt, msg: CharBuf) );
@@ -149,6 +151,26 @@ expose_symbol!( lua_rawequal, CInt, (state: LuaState, ind1: CInt, ind2: CInt) );
 
 // Raising Errors
 expose_symbol!( luaL_typerror, CInt, (state: LuaState, narg: CInt, typename: CharBuf) );
+
+// Open
+expose_symbol!( luaopen_table, CInt, (state: LuaState) );
+expose_symbol!( luaopen_string, CInt, (state: LuaState) );
+expose_symbol!( luaopen_package, CInt, (state: LuaState) );
+expose_symbol!( luaopen_os, CInt, (state: LuaState) );
+expose_symbol!( luaopen_math, CInt, (state: LuaState) );
+expose_symbol!( luaopen_jit, CInt, (state: LuaState) );
+expose_symbol!( luaopen_debug, CInt, (state: LuaState) );
+expose_symbol!( luaopen_bit, CInt, (state: LuaState) );
+expose_symbol!( luaopen_base, CInt, (state: LuaState) );
+expose_symbol!( luaL_openlib, CInt, (state: LuaState) );
+
+// Ref
+expose_symbol!( luaL_ref, CInt, (state: LuaState, t: CInt) );
+expose_symbol!( luaL_unref, (), (state: LuaState, t: CInt, r: CInt) );
+
+// Metatables
+expose_symbol!( luaL_newmetatable, CInt, (state: LuaState, tname: CharBuf) );
+expose_symbol!( luaL_newmetatable_type, CInt, (state: LuaState, tname: CharBuf, typ: CInt) );
 
 #[inline(always)]
 pub fn lua_pop(state: LuaState, ind: CInt) {

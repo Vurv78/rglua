@@ -4,7 +4,7 @@
 
 #[deprecated(
 	since = "0.2.0",
-	note = "Use b\"string\".as_ptr() as std::os::raw::c_char format or CStrings directly instead."
+	note = "Use b\"string\\0\".as_ptr() format or CStrings directly instead."
 )]
 #[macro_export]
 macro_rules! cstring {
