@@ -4,7 +4,7 @@
 
 #[deprecated(
 	since = "0.2.0",
-	note = "Use b\"string\\0\".as_ptr() format or CStrings directly instead."
+	note = "Use b\"string\\0\".as_ptr() as *const i8 format or CStrings directly instead."
 )]
 #[macro_export]
 macro_rules! cstring {
@@ -39,7 +39,7 @@ macro_rules! printgm {
 		{
 			let printargs = format!( $($x,)* );
 			if let Ok(fmt) = std::ffi::CString::new(printargs) {
-				rglua::lua_shared::lua_getglobal( $state, b"print".as_ptr() as *const std::os::raw::c_char );
+				rglua::lua_shared::lua_getglobal( $state, b"print\0".as_ptr() as *const i8 );
 				rglua::lua_shared::lua_pushstring( $state, fmt.as_ptr() );
 				rglua::lua_shared::lua_call( $state, 1, 0 );
 			}
