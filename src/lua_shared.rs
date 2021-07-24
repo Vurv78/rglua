@@ -200,6 +200,8 @@ expose_symbol!( luaL_testudata, (), (state: LuaState, arg: CInt, tname: CharBuf)
 expose_symbol!( luaL_execresult, CInt, (state: LuaState, stat: CInt) );
 expose_symbol!( luaL_fileresult, CInt, (state: LuaState, stat: CInt, fname: CharBuf) );
 expose_symbol!( luaL_findtable, CharBuf, (state: LuaState, idx: CInt, fname: CharBuf, szhint: CInt) );
+expose_symbol!( lua_checkstack, CInt, (state: LuaState, extra: CInt) );
+expose_symbol!( lua_atpanic, LuaCFunction, (state: LuaState, panicf: LuaCFunction) );
 
 // luaL_Buffer
 expose_symbol!( luaL_buffinit, (), (state: LuaState, b: *mut LuaL_Buffer) );
@@ -207,7 +209,6 @@ expose_symbol!( luaL_prepbuffer, *mut i8, (b: *mut LuaL_Buffer) );
 
 // String methods
 expose_symbol!( luaL_gsub, CharBuf, (s: CharBuf, pattern: CharBuf, replace: CharBuf) );
-
 
 #[inline(always)]
 pub fn lua_pop(state: LuaState, ind: CInt) {
