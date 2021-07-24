@@ -151,6 +151,9 @@ expose_symbol!( lua_rawequal, CInt, (state: LuaState, ind1: CInt, ind2: CInt) );
 
 // Raising Errors
 expose_symbol!( luaL_typerror, CInt, (state: LuaState, narg: CInt, typename: CharBuf) );
+expose_symbol!( luaL_error, CInt, (state: LuaState, fmt: CharBuf, ...) );
+expose_symbol!( luaL_argerror, CInt, (state: LuaState, narg: CInt, extramsg: CharBuf) );
+expose_symbol!( lua_error, CInt, (state: LuaState) );
 
 // Open
 expose_symbol!( luaopen_table, CInt, (state: LuaState) );
