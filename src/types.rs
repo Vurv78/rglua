@@ -13,3 +13,12 @@ pub type LuaInteger = isize;
 
 pub type LuaState = *mut CVoid; // Raw Lua state.
 pub type LuaCFunction = extern "C" fn(LuaState) -> CInt;
+
+#[repr(C)]
+pub struct LuaL_Buffer {
+	b: *mut i8,
+	size: SizeT,
+	n: SizeT, // number of chars in buffer
+	state: LuaState,
+	initbuffer: [i8; 8192_usize],
+}

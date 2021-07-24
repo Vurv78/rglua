@@ -117,6 +117,7 @@ expose_symbol!( lua_pushcclosure, (), (state: LuaState, fnc: LuaCFunction, idx: 
 expose_symbol!( lua_pushlightuserdata, (), (state: LuaState, p: *mut CVoid) );
 expose_symbol!( lua_pushthread, (), (state: LuaState) );
 expose_symbol!( lua_pushfstring, CharBuf, (state: LuaState, fmt: CharBuf, ...) );
+expose_symbol!( lua_pushinteger, (), (state: LuaState, n: LuaInteger) );
 
 // Type Checks
 expose_symbol!( luaL_checkinteger, LuaInteger, (state: LuaState, narg: CInt) );
@@ -139,6 +140,11 @@ expose_symbol!( lua_close, (), (state: LuaState) ); // Destroys the lua state
 // JIT
 // Returns 1 for success, 0 for failure
 expose_symbol!( luaJIT_setmode, CInt, (state: LuaState, idx: CInt, jit_mode: CInt) );
+expose_symbol!( luaJIT_profile_stop, (), (state: LuaState) );
+
+type LuaJITProfileCallback = extern "C" fn(data: *mut CVoid, l: LuaState, samples: CInt, vmstate: CInt) -> ();
+expose_symbol!( luaJIT_profile_start, (), (state: LuaState, mode: CharBuf, cb: LuaJITProfileCallback, data: *mut CVoid) );
+expose_symbol!( luaJIT_profile_dumpstack, CharBuf, (state: LuaState, fmt: CharBuf, depth: CInt, len: SizeT) );
 
 // Coroutines
 expose_symbol!( lua_yield, CInt, (state: LuaState, nresults: CInt) );
@@ -174,6 +180,34 @@ expose_symbol!( luaL_unref, (), (state: LuaState, t: CInt, r: CInt) );
 // Metatables
 expose_symbol!( luaL_newmetatable, CInt, (state: LuaState, tname: CharBuf) );
 expose_symbol!( luaL_newmetatable_type, CInt, (state: LuaState, tname: CharBuf, typ: CInt) );
+expose_symbol!( luaL_getmetafield, CInt, (state: LuaState, obj: CInt, e: CharBuf) );
+
+// Optional / Default to ``d``
+expose_symbol!( luaL_optinteger, CInt, (state: LuaState, narg: CInt, d: LuaInteger) );
+expose_symbol!( luaL_optlstring, CharBuf, (state: LuaState, arg: CInt, d: CharBuf, l: SizeT) );
+expose_symbol!( luaL_optnumber, LuaNumber, (state: LuaState, arg: CInt, d: LuaNumber) );
+
+// x / ref functions
+expose_symbol!( lua_tointegerx, LuaInteger, (state: LuaState, index: CInt, isnum: *mut CInt) );
+expose_symbol!( lua_tonumberx, LuaNumber, (state: LuaState, index: CInt, isnum: *mut CInt) );
+
+// Debug
+expose_symbol!( luaL_traceback, (), (state: LuaState, state1: LuaState, msg: CharBuf, level: CInt) );
+expose_symbol!( luaL_where, (), (state: LuaState, lvl: CInt) );
+
+// Misc
+expose_symbol!( luaL_testudata, (), (state: LuaState, arg: CInt, tname: CharBuf) );
+expose_symbol!( luaL_execresult, CInt, (state: LuaState, stat: CInt) );
+expose_symbol!( luaL_fileresult, CInt, (state: LuaState, stat: CInt, fname: CharBuf) );
+expose_symbol!( luaL_findtable, CharBuf, (state: LuaState, idx: CInt, fname: CharBuf, szhint: CInt) );
+
+// luaL_Buffer
+expose_symbol!( luaL_buffinit, (), (state: LuaState, b: *mut LuaL_Buffer) );
+expose_symbol!( luaL_prepbuffer, *mut i8, (b: *mut LuaL_Buffer) );
+
+// String methods
+expose_symbol!( luaL_gsub, CharBuf, (s: CharBuf, pattern: CharBuf, replace: CharBuf) );
+
 
 #[inline(always)]
 pub fn lua_pop(state: LuaState, ind: CInt) {
