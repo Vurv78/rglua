@@ -62,6 +62,8 @@ use once_cell::sync::Lazy;
 use crate::types::*;
 use crate::globals::Lua::{self, GLOBALSINDEX};
 
+expose_symbol!( CreateInterface, *mut CVoid, (pName: CharBuf, pReturnCode: *mut CInt) );
+
 // Load lua Code
 expose_symbol!( luaL_loadbufferx, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf, mode: CharBuf) );
 expose_symbol!( luaL_loadbuffer, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) );

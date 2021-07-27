@@ -6,5 +6,8 @@ pub mod types;
 pub mod globals;
 pub mod helpers;
 
+mod interfaces;
+pub mod interface;
+
 #[macro_use]
 pub mod lua_shared;
