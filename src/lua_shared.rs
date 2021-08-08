@@ -204,6 +204,7 @@ expose_symbol!( luaL_fileresult, CInt, (state: LuaState, stat: CInt, fname: Char
 expose_symbol!( luaL_findtable, CharBuf, (state: LuaState, idx: CInt, fname: CharBuf, szhint: CInt) );
 expose_symbol!( lua_checkstack, CInt, (state: LuaState, extra: CInt) );
 expose_symbol!( lua_atpanic, LuaCFunction, (state: LuaState, panicf: LuaCFunction) );
+expose_symbol!( lua_gettop, CInt, (state: LuaState) );
 
 // luaL_Buffer
 expose_symbol!( luaL_buffinit, (), (state: LuaState, b: *mut LuaL_Buffer) );
