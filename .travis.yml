@@ -7,7 +7,7 @@ rust:
 
 branches:
   only:
-  - main
+  - master
 
 jobs:
   allow_failures:

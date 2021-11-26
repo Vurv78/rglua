@@ -1,6 +1,5 @@
 
 use std::ffi::{ c_void, CString };
-
 pub use crate::interfaces::*;
 
 pub type CreateInterfaceFn = extern "system" fn(
@@ -8,6 +7,8 @@ pub type CreateInterfaceFn = extern "system" fn(
 	pReturnCode: *mut i32
 ) -> *mut c_void;
 
+///  # Safety
+/// This function is unsafe to transmute the internal libloading symbol to a proper createinterface function pointer.
 pub unsafe fn get_interface_handle(file: &str) -> Result<CreateInterfaceFn, libloading::Error> {
 	let lib = libloading::Library::new(file)?;
 	let sym: libloading::Symbol<CreateInterfaceFn> = lib.get(b"CreateInterface\0")?;
@@ -25,7 +26,7 @@ pub fn get_from_interface(iface: &str, factory: CreateInterfaceFn) -> Result<*mu
 	let mut status = 0;
 
 	let iface = CString::new(iface)
-		.map_err( |e| InterfaceError::BadCString(e) )?;
+		.map_err(InterfaceError::BadCString)?;
 
 	let result = factory( iface.as_ptr(), &mut status );
 

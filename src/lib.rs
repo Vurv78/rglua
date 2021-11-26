@@ -4,10 +4,13 @@
 
 pub mod types;
 pub mod globals;
-pub mod helpers;
-
+mod helper;
+#[cfg(feature = "interfaces")]
 mod interfaces;
+#[cfg(feature = "interfaces")]
 pub mod interface;
 
 #[macro_use]
 pub mod lua_shared;
+
+pub mod prelude;

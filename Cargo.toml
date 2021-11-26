@@ -1,9 +1,9 @@
 [package]
 name = "rglua"
 description = "Rust bindings to the lua api for gmod binary module creation"
-version = "0.4.0"
+version = "0.5.0"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
-keywords = ["glua","garrysmod","lua"]
+keywords = ["glua", "garrysmod", "lua", "gmod"]
 readme = "README.md"
 license = "MIT"
 edition = "2018"
@@ -14,5 +14,9 @@ edition = "2018"
 libloading = "0.7.0"
 once_cell = "1.7.2"
 
-vtables = "0.1.0"
-vtables_derive = "0.1.0"
+vtables = { version = "0.1.0", optional = true }
+vtables_derive = { version = "0.1.0", optional = true }
+
+[features]
+default = ["interfaces"]
+interfaces = ["vtables", "vtables_derive"]

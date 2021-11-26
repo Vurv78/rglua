@@ -1,4 +1,4 @@
-# rglua [![Release Shield](https://img.shields.io/github/v/release/Vurv78/rglua)](https://github.com/Vurv78/rglua/releases/latest) ![Linux Build Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main) [![License](https://img.shields.io/github/license/Vurv78/rglua?color=red)](https://opensource.org/licenses/Apache-2.0) [![github/Vurv78](https://img.shields.io/discord/824727565948157963?color=7289DA&label=chat&logo=discord)](https://discord.gg/epJFC6cNsw)
+# rglua [![Release Shield](https://img.shields.io/github/v/release/Vurv78/rglua)](https://github.com/Vurv78/rglua/releases/latest) ![Build Status](https://www.travis-ci.com/Vurv78/rglua.svg?branch=main) [![License](https://img.shields.io/github/license/Vurv78/rglua?color=red)](https://opensource.org/licenses/Apache-2.0) [![github/Vurv78](https://img.shields.io/discord/824727565948157963?label=Discord&logo=discord&logoColor=ffffff&labelColor=7289DA&color=2c2f33)](https://discord.gg/epJFC6cNsw)
 
 This is a crate that contains bindings for using the lua c api in garrysmod through bindings using the rust libloading library.
 Can be used for either binary modules or just manual injections into gmod, like with [Autorun-rs](https://github.com/Vurv78/Autorun-rs)
@@ -15,7 +15,7 @@ Add this to your ``Cargo.toml`` file
 crate-type = ["cdylib"] # This tells rust we want to create a .dll file that links to C code.
 
 [dependencies]
-rglua = { git = "https://github.com/Vurv78/rglua" }
+rglua = "0.5.0"
 ```
 
 ## Building
@@ -38,16 +38,12 @@ Also do this if you have never compiled to 32 bit, to get rustup to install 32 b
 
 ## Example Module
 ```rust
-use rglua::{
-	types::{ LuaState, CharBuf },
-	cstring,
-	lua_shared::*
-};
+use rglua::prelude::*;
 
 #[no_mangle]
 pub extern fn gmod13_open(state: LuaState) -> i32 {
-	lua_getglobal( state, b"print\0".as_ptr() as CharBuf );
-	lua_pushstring( state, cstring!("Hello from rust!") );
+	lua_getglobal( state, cstr!("print") );
+	lua_pushstring( state, cstr!("Hello from rust!") );
 	lua_call( state, 1, 0 );
 	0
 }

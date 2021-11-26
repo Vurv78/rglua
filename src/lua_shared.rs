@@ -1,5 +1,4 @@
 #![allow(unused)]
-#![macro_export]
 
 use libloading::Library;
 
@@ -40,19 +39,22 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 	Some(full)
 });
 
-macro_rules! expose_symbol {
-	($name:ident, $ret:ty, $($args:tt)*) => {
-		pub const $name: Lazy<extern fn$($args)* -> $ret> = Lazy::new(|| {
+macro_rules! dyn_symbols {
+	( $vis:vis extern fn $name:ident( $($arg:ident : $argty:ty),* ) -> $ret:ty; $($rest:tt)* ) => {
+		$vis static $name: Lazy<extern fn($($arg: $argty),*) -> $ret> = Lazy::new(|| {
 			unsafe {
 				let lib = &*LUA_SHARED_RAW;
-				let v: libloading::Symbol<extern fn$($args)* -> $ret> = lib.get( stringify!($name).as_bytes() ).unwrap();
+				let v: libloading::Symbol<extern fn($($arg: $argty),*) -> $ret> = lib.get( stringify!($name).as_bytes() ).unwrap();
 				std::mem::transmute(v)
 			}
 		});
+		dyn_symbols!( $($rest)* );
 	};
+
+	() => ()
 }
 
-pub const LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
+pub static LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
 	let path = LUA_SHARED_PATH.as_ref().expect("Couldn't find lua_shared.dll!");
 	unsafe { Library::new(path).expect("Could not open library") }
 });
@@ -62,169 +64,172 @@ use once_cell::sync::Lazy;
 use crate::types::*;
 use crate::globals::Lua::{self, GLOBALSINDEX};
 
-expose_symbol!( CreateInterface, *mut CVoid, (pName: CharBuf, pReturnCode: *mut CInt) );
+pub type LuaJITProfileCallback = extern "C" fn(data: *mut c_void, l: LuaState, samples: c_int, vmstate: c_int) -> ();
 
-// Load lua Code
-expose_symbol!( luaL_loadbufferx, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf, mode: CharBuf) );
-expose_symbol!( luaL_loadbuffer, CInt, (state: LuaState, code: CharBuf, size: SizeT, id: CharBuf) );
-expose_symbol!( luaL_loadstring, CInt, (state: LuaState, code: CharBuf) );
-expose_symbol!( luaL_loadfile, CInt, (state: LuaState, filename: CharBuf) );
-expose_symbol!( luaL_loadfilex, CInt, (state: LuaState, filename: CharBuf, mode: CharBuf) );
+// Create Lazy cells that'll find the functions at runtime when called.
+dyn_symbols!(
+	pub extern fn CreateInterface(pName: LuaString, pReturnCode: *mut c_int) -> *mut c_void;
 
-// Call lua code
-expose_symbol!( lua_pcall, CInt, (state: LuaState, nargs: CInt, nresults: CInt, msgh: CInt) );
-expose_symbol!( lua_call, CInt, (state: LuaState, nargs: CInt, nresults: CInt) );
-expose_symbol!( lua_cpcall, CInt, (state: LuaState, func: LuaCFunction, userdata: *mut CVoid ) );
-expose_symbol!( luaL_callmeta, CInt, (state: LuaState, obj: CInt, name: CharBuf) );
+	pub extern fn luaL_loadbufferx(state: LuaState, code: LuaString, size: SizeT, id: LuaString, mode: LuaString) -> c_int;
+	pub extern fn luaL_loadbuffer(state: LuaState, code: LuaString, size: SizeT, id: LuaString) -> c_int;
+	pub extern fn luaL_loadstring(state: LuaState, code: LuaString) -> c_int;
+	pub extern fn luaL_loadfile(state: LuaState, filename: LuaString) -> c_int;
+	pub extern fn luaL_loadfilex(state: LuaState, filename: LuaString, mode: LuaString) -> c_int;
 
-// Setters
-expose_symbol!( lua_setfield, (), (state: LuaState, idx: CInt, name: CharBuf) );
+	// Call lua code
+	pub extern fn lua_pcall(state: LuaState, nargs: c_int, nresults: c_int, msgh: c_int) -> c_int;
+	pub extern fn lua_call(state: LuaState, nargs: c_int, nresults: c_int) -> c_int;
+	pub extern fn lua_cpcall(state: LuaState, func: LuaCFunction, userdata: *mut c_void ) -> c_int;
+	pub extern fn luaL_callmeta(state: LuaState, obj: c_int, name: LuaString) -> c_int;
 
-expose_symbol!( lua_setmetatable, (), (state: LuaState, idx: CInt) );
-expose_symbol!( lua_settop, (), (state: LuaState, ind: CInt) );
-expose_symbol!( lua_setupvalue, CharBuf, (state: LuaState, fidx: CInt, idx: CInt) );
-expose_symbol!( lua_setfenv, CInt, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_settable, (), (state: LuaState, idx: CInt) );
-expose_symbol!( lua_rawset, (), (state: LuaState, idx: CInt) ); // lua_settable but no metamethods called
-expose_symbol!( lua_rawseti, (), (state: LuaState, idx: CInt, n: CInt) ); // t[n] = v
+	// Setters
+	pub extern fn lua_setfield(state: LuaState, idx: c_int, name: LuaString) -> ();
 
-// Getters
-expose_symbol!( lua_gettable, (), (state: LuaState, idx: CInt) );
-expose_symbol!( lua_rawget, (), (state: LuaState, idx: CInt) ); // lua_gettable but no metamethods called
-expose_symbol!( lua_rawgeti, (), (state: LuaState, idx: CInt, n: CInt) ); // lua_gettable but no metamethods called
+	pub extern fn lua_setmetatable(state: LuaState, idx: c_int) -> ();
+	pub extern fn lua_settop(state: LuaState, ind: c_int) -> ();
+	pub extern fn lua_setupvalue(state: LuaState, fidx: c_int, idx: c_int) -> LuaString;
+	pub extern fn lua_setfenv(state: LuaState, idx: c_int) -> c_int;
+	pub extern fn lua_settable(state: LuaState, idx: c_int) -> ();
+	pub extern fn lua_rawset(state: LuaState, idx: c_int) -> (); // lua_settable but no metamethods called
+	pub extern fn lua_rawseti(state: LuaState, idx: c_int, n: c_int) -> (); // t[n] = v
 
-expose_symbol!( lua_getfield, (), (state: LuaState, idx: CInt, key: CharBuf) );
-expose_symbol!( lua_getupvalue, CharBuf, (state: LuaState, fidx: CInt, idx: CInt) );
-expose_symbol!( lua_type, CInt, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_typename, CharBuf, (state: LuaState, typeid: CInt) ); // To be used with the return value of lua_type
+	// Getters
+	pub extern fn lua_gettable(state: LuaState, idx: c_int) -> ();
+	pub extern fn lua_rawget(state: LuaState, idx: c_int) -> (); // lua_gettable but no metamethods called
+	pub extern fn lua_rawgeti(state: LuaState, idx: c_int, n: c_int) -> (); // lua_gettable but no metamethods called
 
-// Getters (with "to")
-expose_symbol!( lua_tolstring, CharBuf, (state: LuaState, ind: CInt, size: SizeT) );
-expose_symbol!( lua_toboolean, CInt, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_tocfunction, LuaCFunction, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_tointeger, LuaInteger, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_tonumber, LuaNumber, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_topointer, *mut CVoid, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_tothread, LuaState, (state: LuaState, idx: CInt) );
-expose_symbol!( lua_touserdata, *mut CVoid, (state: LuaState, idx: CInt) );
+	pub extern fn lua_getfield(state: LuaState, idx: c_int, key: LuaString) -> ();
+	pub extern fn lua_getupvalue(state: LuaState, fidx: c_int, idx: c_int) -> LuaString;
+	pub extern fn lua_type(state: LuaState, idx: c_int) -> c_int;
+	pub extern fn lua_typename(state: LuaState, typeid: c_int) -> LuaString; // To be used with the return value of lua_type
 
-// Push functions
-expose_symbol!( lua_pushstring, (), (state: LuaState, s: CharBuf) );
-expose_symbol!( lua_pushboolean, (), (state: LuaState, s: CInt) );
-expose_symbol!( lua_pushlstring, (), (state: LuaState, s: CharBuf, sz: SizeT) );
-expose_symbol!( lua_pushnil, (), (state: LuaState) );
-expose_symbol!( lua_pushnumber, (), (state: LuaState, num: LuaNumber) );
-expose_symbol!( lua_pushvalue, (), (state: LuaState, idx: CInt) );
-expose_symbol!( lua_pushcclosure, (), (state: LuaState, fnc: LuaCFunction, idx: CInt) );
-expose_symbol!( lua_pushlightuserdata, (), (state: LuaState, p: *mut CVoid) );
-expose_symbol!( lua_pushthread, (), (state: LuaState) );
-expose_symbol!( lua_pushfstring, CharBuf, (state: LuaState, fmt: CharBuf, ...) );
-expose_symbol!( lua_pushinteger, (), (state: LuaState, n: LuaInteger) );
+	// Getters (with "to")
+	pub extern fn lua_tolstring(state: LuaState, ind: c_int, size: SizeT) -> LuaString;
+	pub extern fn lua_toboolean(state: LuaState, idx: c_int) -> c_int;
+	pub extern fn lua_tocfunction(state: LuaState, idx: c_int) -> LuaCFunction;
+	pub extern fn lua_tointeger(state: LuaState, idx: c_int) -> LuaInteger;
+	pub extern fn lua_tonumber(state: LuaState, idx: c_int) -> LuaNumber;
+	pub extern fn lua_topointer(state: LuaState, idx: c_int) -> *mut c_void;
+	pub extern fn lua_tothread(state: LuaState, idx: c_int) -> LuaState;
+	pub extern fn lua_touserdata(state: LuaState, idx: c_int) -> *mut c_void;
 
-// Type Checks
-expose_symbol!( luaL_checkinteger, LuaInteger, (state: LuaState, narg: CInt) );
-expose_symbol!( luaL_checknumber, LuaNumber, (state: LuaState, narg: CInt) );
-expose_symbol!( luaL_checklstring, CharBuf, (state: LuaState, narg: CInt, len: SizeT) );
+	// Push functions
+	pub extern fn lua_pushstring(state: LuaState, s: LuaString) -> ();
+	pub extern fn lua_pushboolean(state: LuaState, s: c_int) -> ();
+	pub extern fn lua_pushlstring(state: LuaState, s: LuaString, sz: SizeT) -> ();
+	pub extern fn lua_pushnil(state: LuaState) -> ();
+	pub extern fn lua_pushnumber(state: LuaState, num: LuaNumber) -> ();
+	pub extern fn lua_pushvalue(state: LuaState, idx: c_int) -> ();
+	pub extern fn lua_pushcclosure(state: LuaState, fnc: LuaCFunction, idx: c_int) -> ();
+	pub extern fn lua_pushlightuserdata(state: LuaState, p: *mut c_void) -> ();
+	pub extern fn lua_pushthread(state: LuaState) -> ();
+	//pub extern fn lua_pushfstring(state: LuaState, fmt: LuaString, ...) -> LuaString;
+	pub extern fn lua_pushinteger(state: LuaState, n: LuaInteger) -> ();
 
-// Type Checks that return nothing
-expose_symbol!( luaL_checkstack, (), (state: LuaState, size: CInt, msg: CharBuf) );
-expose_symbol!( luaL_checkany, (), (state: LuaState, narg: CInt) );
-expose_symbol!( luaL_checktype, (), (state: LuaState, narg: CInt, typeid: CInt) );
-expose_symbol!( luaL_checkudata, (), (state: LuaState, narg: CInt, len: SizeT) );
+	// Type Checks
+	pub extern fn luaL_checkinteger(state: LuaState, narg: c_int) -> LuaInteger;
+	pub extern fn luaL_checknumber(state: LuaState, narg: c_int) -> LuaNumber;
+	pub extern fn luaL_checklstring(state: LuaState, narg: c_int, len: SizeT) -> LuaString;
 
-// Creation
-expose_symbol!( luaL_newstate, LuaState, () );
-expose_symbol!( lua_createtable, (), (state: LuaState, narr: CInt, nrec: CInt) );
+	// Type Checks that return nothing
+	pub extern fn luaL_checkstack(state: LuaState, size: c_int, msg: LuaString) -> ();
+	pub extern fn luaL_checkany(state: LuaState, narg: c_int) -> ();
+	pub extern fn luaL_checktype(state: LuaState, narg: c_int, typeid: c_int) -> ();
+	pub extern fn luaL_checkudata(state: LuaState, narg: c_int, len: SizeT) -> ();
 
-// Destruction
-expose_symbol!( lua_close, (), (state: LuaState) ); // Destroys the lua state
+	// Creation
+	pub extern fn luaL_newstate() -> LuaState;
+	pub extern fn lua_createtable(state: LuaState, narr: c_int, nrec: c_int) -> ();
 
-// JIT
-// Returns 1 for success, 0 for failure
-expose_symbol!( luaJIT_setmode, CInt, (state: LuaState, idx: CInt, jit_mode: CInt) );
-expose_symbol!( luaJIT_profile_stop, (), (state: LuaState) );
+	// Destruction
+	pub extern fn lua_close(state: LuaState) -> (); // Destroys the lua state
 
-type LuaJITProfileCallback = extern "C" fn(data: *mut CVoid, l: LuaState, samples: CInt, vmstate: CInt) -> ();
-expose_symbol!( luaJIT_profile_start, (), (state: LuaState, mode: CharBuf, cb: LuaJITProfileCallback, data: *mut CVoid) );
-expose_symbol!( luaJIT_profile_dumpstack, CharBuf, (state: LuaState, fmt: CharBuf, depth: CInt, len: SizeT) );
+	// JIT
+	// Returns 1 for success, 0 for failure
+	pub extern fn luaJIT_setmode(state: LuaState, idx: c_int, jit_mode: c_int) -> c_int;
+	pub extern fn luaJIT_profile_stop(state: LuaState) -> ();
 
-// Coroutines
-expose_symbol!( lua_yield, CInt, (state: LuaState, nresults: CInt) );
-expose_symbol!( lua_status, CInt, (state: LuaState) );
-expose_symbol!( lua_resume_real, CInt, (state: LuaState, narg: CInt) );
+	pub extern fn luaJIT_profile_start(state: LuaState, mode: LuaString, cb: LuaJITProfileCallback, data: *mut c_void) -> ();
+	pub extern fn luaJIT_profile_dumpstack(state: LuaState, fmt: LuaString, depth: c_int, len: SizeT) -> LuaString;
 
-// Comparison
-expose_symbol!( lua_equal, CInt, (state: LuaState, ind1: CInt, ind2: CInt) ); // Returns 1 or 0 bool
-expose_symbol!( lua_rawequal, CInt, (state: LuaState, ind1: CInt, ind2: CInt) );
+	// Coroutines
+	pub extern fn lua_yield(state: LuaState, nresults: c_int) -> c_int;
+	pub extern fn lua_status(state: LuaState) -> c_int;
+	pub extern fn lua_resume_real(state: LuaState, narg: c_int) -> c_int;
 
-// Raising Errors
-expose_symbol!( luaL_typerror, CInt, (state: LuaState, narg: CInt, typename: CharBuf) );
-expose_symbol!( luaL_error, CInt, (state: LuaState, fmt: CharBuf, ...) );
-expose_symbol!( luaL_argerror, CInt, (state: LuaState, narg: CInt, extramsg: CharBuf) );
-expose_symbol!( lua_error, CInt, (state: LuaState) );
+	// Comparison
+	pub extern fn lua_equal(state: LuaState, ind1: c_int, ind2: c_int) -> c_int; // Returns 1 or 0 bool
+	pub extern fn lua_rawequal(state: LuaState, ind1: c_int, ind2: c_int) -> c_int;
 
-// Open
-expose_symbol!( luaopen_table, CInt, (state: LuaState) );
-expose_symbol!( luaopen_string, CInt, (state: LuaState) );
-expose_symbol!( luaopen_package, CInt, (state: LuaState) );
-expose_symbol!( luaopen_os, CInt, (state: LuaState) );
-expose_symbol!( luaopen_math, CInt, (state: LuaState) );
-expose_symbol!( luaopen_jit, CInt, (state: LuaState) );
-expose_symbol!( luaopen_debug, CInt, (state: LuaState) );
-expose_symbol!( luaopen_bit, CInt, (state: LuaState) );
-expose_symbol!( luaopen_base, CInt, (state: LuaState) );
-expose_symbol!( luaL_openlib, CInt, (state: LuaState) );
+	// Raising Errors
+	pub extern fn luaL_typerror(state: LuaState, narg: c_int, typename: LuaString) -> c_int;
+	//pub extern fn luaL_error(state: LuaState, fmt: LuaString, ...) -> c_int;
+	pub extern fn luaL_argerror(state: LuaState, narg: c_int, extramsg: LuaString) -> c_int;
+	pub extern fn lua_error(state: LuaState) -> c_int;
 
-// Ref
-expose_symbol!( luaL_ref, CInt, (state: LuaState, t: CInt) );
-expose_symbol!( luaL_unref, (), (state: LuaState, t: CInt, r: CInt) );
+	// Open
+	pub extern fn luaopen_table(state: LuaState) -> c_int;
+	pub extern fn luaopen_string(state: LuaState) -> c_int;
+	pub extern fn luaopen_package(state: LuaState) -> c_int;
+	pub extern fn luaopen_os(state: LuaState) -> c_int;
+	pub extern fn luaopen_math(state: LuaState) -> c_int;
+	pub extern fn luaopen_jit(state: LuaState) -> c_int;
+	pub extern fn luaopen_debug(state: LuaState) -> c_int;
+	pub extern fn luaopen_bit(state: LuaState) -> c_int;
+	pub extern fn luaopen_base(state: LuaState) -> c_int;
+	pub extern fn luaL_openlib(state: LuaState) -> c_int;
 
-// Metatables
-expose_symbol!( luaL_newmetatable, CInt, (state: LuaState, tname: CharBuf) );
-expose_symbol!( luaL_newmetatable_type, CInt, (state: LuaState, tname: CharBuf, typ: CInt) );
-expose_symbol!( luaL_getmetafield, CInt, (state: LuaState, obj: CInt, e: CharBuf) );
+	// Ref
+	pub extern fn luaL_ref(state: LuaState, t: c_int) -> c_int;
+	pub extern fn luaL_unref(state: LuaState, t: c_int, r: c_int) -> ();
 
-// Optional / Default to ``d``
-expose_symbol!( luaL_optinteger, CInt, (state: LuaState, narg: CInt, d: LuaInteger) );
-expose_symbol!( luaL_optlstring, CharBuf, (state: LuaState, arg: CInt, d: CharBuf, l: SizeT) );
-expose_symbol!( luaL_optnumber, LuaNumber, (state: LuaState, arg: CInt, d: LuaNumber) );
+	// Metatables
+	pub extern fn luaL_newmetatable(state: LuaState, tname: LuaString) -> c_int;
+	pub extern fn luaL_newmetatable_type(state: LuaState, tname: LuaString, typ: c_int) -> c_int;
+	pub extern fn luaL_getmetafield(state: LuaState, obj: c_int, e: LuaString) -> c_int;
 
-// x / ref functions
-expose_symbol!( lua_tointegerx, LuaInteger, (state: LuaState, index: CInt, isnum: *mut CInt) );
-expose_symbol!( lua_tonumberx, LuaNumber, (state: LuaState, index: CInt, isnum: *mut CInt) );
+	// Optional / Default to ``d``
+	pub extern fn luaL_optinteger(state: LuaState, narg: c_int, d: LuaInteger) -> c_int;
+	pub extern fn luaL_optlstring(state: LuaState, arg: c_int, d: LuaString, l: SizeT) -> LuaString;
+	pub extern fn luaL_optnumber(state: LuaState, arg: c_int, d: LuaNumber) -> LuaNumber;
 
-// Debug
-expose_symbol!( luaL_traceback, (), (state: LuaState, state1: LuaState, msg: CharBuf, level: CInt) );
-expose_symbol!( luaL_where, (), (state: LuaState, lvl: CInt) );
+	// x / ref functions
+	pub extern fn lua_tointegerx(state: LuaState, index: c_int, isnum: *mut c_int) -> LuaInteger;
+	pub extern fn lua_tonumberx(state: LuaState, index: c_int, isnum: *mut c_int) -> LuaNumber;
 
-// Misc
-expose_symbol!( luaL_testudata, (), (state: LuaState, arg: CInt, tname: CharBuf) );
-expose_symbol!( luaL_execresult, CInt, (state: LuaState, stat: CInt) );
-expose_symbol!( luaL_fileresult, CInt, (state: LuaState, stat: CInt, fname: CharBuf) );
-expose_symbol!( luaL_findtable, CharBuf, (state: LuaState, idx: CInt, fname: CharBuf, szhint: CInt) );
-expose_symbol!( lua_checkstack, CInt, (state: LuaState, extra: CInt) );
-expose_symbol!( lua_atpanic, LuaCFunction, (state: LuaState, panicf: LuaCFunction) );
-expose_symbol!( lua_gettop, CInt, (state: LuaState) );
+	// Debug
+	pub extern fn luaL_traceback(state: LuaState, state1: LuaState, msg: LuaString, level: c_int) -> ();
+	pub extern fn luaL_where(state: LuaState, lvl: c_int) -> ();
 
-// luaL_Buffer
-expose_symbol!( luaL_buffinit, (), (state: LuaState, b: *mut LuaL_Buffer) );
-expose_symbol!( luaL_prepbuffer, *mut i8, (b: *mut LuaL_Buffer) );
+	// Misc
+	pub extern fn luaL_testudata(state: LuaState, arg: c_int, tname: LuaString) -> ();
+	pub extern fn luaL_execresult(state: LuaState, stat: c_int) -> c_int;
+	pub extern fn luaL_fileresult(state: LuaState, stat: c_int, fname: LuaString) -> c_int;
+	pub extern fn luaL_findtable(state: LuaState, idx: c_int, fname: LuaString, szhint: c_int) -> LuaString;
+	pub extern fn lua_checkstack(state: LuaState, extra: c_int) -> c_int;
+	pub extern fn lua_atpanic(state: LuaState, panicf: LuaCFunction) -> LuaCFunction;
+	pub extern fn lua_gettop(state: LuaState) -> c_int;
 
-// String methods
-expose_symbol!( luaL_gsub, CharBuf, (s: CharBuf, pattern: CharBuf, replace: CharBuf) );
+	// luaL_Buffer
+	pub extern fn luaL_buffinit(state: LuaState, b: *mut LuaL_Buffer) -> ();
+	pub extern fn luaL_prepbuffer(b: *mut LuaL_Buffer) -> *mut i8;
+
+	// String methods
+	pub extern fn luaL_gsub(s: LuaString, pattern: LuaString, replace: LuaString) -> LuaString;
+);
 
 #[inline(always)]
-pub fn lua_pop(state: LuaState, ind: CInt) {
+pub fn lua_pop(state: LuaState, ind: c_int) {
 	lua_settop( state, -(ind)-1 );
 }
 
 #[inline(always)]
-pub fn lua_getglobal(state: LuaState, name: CharBuf) {
+pub fn lua_getglobal(state: LuaState, name: LuaString) {
 	lua_getfield(state, GLOBALSINDEX, name);
 }
 
 #[inline(always)]
-pub fn lua_setglobal(state: LuaState, name: CharBuf) {
+pub fn lua_setglobal(state: LuaState, name: LuaString) {
 	lua_setfield(state, GLOBALSINDEX, name);
 }
 
@@ -234,11 +239,11 @@ pub fn lua_pushcfunction(state: LuaState, fnc: LuaCFunction) {
 }
 
 #[inline(always)]
-pub fn lua_tostring(state: LuaState, idx: CInt) -> CharBuf {
+pub fn lua_tostring(state: LuaState, idx: c_int) -> LuaString {
 	lua_tolstring(state, idx, 0)
 }
 
 #[inline(always)]
-pub fn lua_resume(state: LuaState, narg: CInt) -> CInt {
+pub fn lua_resume(state: LuaState, narg: c_int) -> c_int {
 	lua_resume_real(state, narg)
 }

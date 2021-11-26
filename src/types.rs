@@ -1,18 +1,16 @@
 use std::os::raw as ffi;
 
 // C FFI Types
-pub type CVoid = ffi::c_void;
-pub type CInt = ffi::c_int;
-pub type CLong = ffi::c_long;
-pub type CharBuf = *const ffi::c_char; //*const i8; // const char*
+pub use ffi::{c_void, c_int, c_long};
+pub type LuaString = *const ffi::c_char; // const i8
 pub type SizeT = usize;
 
 // Lua Types below
 pub type LuaNumber = f64; // All lua numbers are doubles in Lua 5.1 (Glua)
 pub type LuaInteger = isize;
 
-pub type LuaState = *mut CVoid; // Raw Lua state.
-pub type LuaCFunction = extern "C" fn(LuaState) -> CInt;
+pub type LuaState = *mut c_void; // Raw Lua state.
+pub type LuaCFunction = extern "C" fn(LuaState) -> c_int;
 
 #[repr(C)]
 pub struct LuaL_Buffer {
