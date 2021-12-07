@@ -4,7 +4,7 @@ use vtables_derive::*;
 #[has_vtable]
 #[derive(VTable)]
 pub struct IPanel {
-	pub vtable: usize
+	pub vtable: usize,
 }
 
 impl IPanel {

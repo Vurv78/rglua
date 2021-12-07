@@ -12,7 +12,6 @@ pub mod Lua {
 	pub static NUMTYPES: c_int = 9;
 	pub static NUMTAGS: c_int = NUMTYPES;
 
-
 	// Proper enums to use. Cast these to integers when using them
 	pub enum Type {
 		None = -1,
@@ -24,7 +23,7 @@ pub mod Lua {
 		Table,
 		Function,
 		UserData,
-		Thread
+		Thread,
 	}
 
 	pub enum Status {
@@ -33,7 +32,7 @@ pub mod Lua {
 		ErrRun,
 		ErrSyntax,
 		ErrMem,
-		ErrErr
+		ErrErr,
 	}
 
 	// Garbage collection
@@ -48,7 +47,7 @@ pub mod Lua {
 		SetStepMul,
 		IsRunning,
 		Gen,
-		Inc // 11
+		Inc, // 11
 	}
 
 	// To be used with debug.sethook
@@ -57,14 +56,14 @@ pub mod Lua {
 		Ret,
 		Line,
 		Count,
-		TailCall
+		TailCall,
 	}
 
 	pub enum Mask {
 		Call = (1 << Hook::Call as i32),
 		Ret = (1 << Hook::Ret as i32),
 		Line = (1 << Hook::Line as i32),
-		Count = (1 << Hook::Count as i32)
+		Count = (1 << Hook::Count as i32),
 	}
 }
 
@@ -78,7 +77,7 @@ pub mod Jit {
 		TRACE,
 		WRAPCFUNC = 0x10,
 		MAX,
-		MASK = 0x0ff // LUAJIT_MODE_MASK
+		MASK = 0x0ff, // LUAJIT_MODE_MASK
 	}
 
 	use super::c_int;

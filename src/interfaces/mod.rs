@@ -1,4 +1,3 @@
-
 pub mod structs {
 	use vtables::VTable;
 	use vtables_derive::*;
@@ -20,13 +19,13 @@ pub mod structs {
 		ishltv: bool,
 		customFiles: [u64; 4],
 		filesDownloaded: u8,
-		pad: [i8; 304]
+		pad: [i8; 304],
 	}
 
 	#[has_vtable]
 	#[derive(VTable)]
 	pub struct ILuaInterface {
-		pub vtable: usize
+		pub vtable: usize,
 	}
 
 	impl ILuaInterface {

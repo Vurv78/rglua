@@ -8,7 +8,7 @@ use std::os::raw::c_char;
 #[has_vtable]
 #[derive(VTable, Debug)]
 pub struct EngineClient {
-	pub vtable: usize
+	pub vtable: usize,
 }
 
 impl EngineClient {

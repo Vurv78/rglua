@@ -1,7 +1,7 @@
 use std::os::raw as ffi;
 
 // C FFI Types
-pub use ffi::{c_void, c_int, c_long};
+pub use ffi::{c_int, c_long, c_void};
 pub type LuaString = *const ffi::c_char; // const i8
 pub type SizeT = usize;
 
