@@ -1,7 +1,7 @@
 [package]
 name = "rglua"
-description = "Rust bindings to the lua api for gmod binary module creation"
-version = "0.6.0"
+description = "Rust tooling for garrysmod development with the LuaJIT api"
+version = "0.6.1"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
 keywords = ["glua", "garrysmod", "lua", "gmod"]
 readme = "README.md"

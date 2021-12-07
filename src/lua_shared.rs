@@ -262,7 +262,7 @@ dyn_symbols! {
 
 // Inline functions to mirror the C macros that come with the lua api
 lua_macros! {
-	fn lua_pop(L: LuaState, ind: c_int) -> () {
+	pub fn lua_pop(L: LuaState, ind: c_int) -> () {
 		lua_settop(L, -(ind) - 1);
 	};
 

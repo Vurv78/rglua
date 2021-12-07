@@ -19,19 +19,16 @@ rglua = "0.6.0"
 ```
 
 ## Building
-After [installing rust, ](https://www.rust-lang.org/tools/install) just run  ``cargo build --release``.
+After [installing rust](https://www.rust-lang.org/tools/install), just run  ``cargo build --release``.
 
-If you are building to 32 bit for srcds or non x64 garrysmod, first do:  
-``rustup target add i686-pc-windows-msvc`` in order to make rust download any 32 bit libraries needed to compile this.  
-
-And finally run:  
-``cargo build --release --target=i686-pc-windows-msvc``
-
-Also do this if you have never compiled to 32 bit, to get rustup to install 32 bit versions of everything you need  
-``rustup target add i686-pc-windows-msvc``
+If you are targeting 32 bit make sure to install the toolchain and build to it:
+```bash
+rustup target add i686-pc-windows-msvc
+cargo build --release --target=i686-pc-windows-msvc
+```
 
 ## Notes
-*  I have never tested this outside of Windows and won't.
+*  I have never tested this outside of Windows and will not be able to.
    If there are any issues on other platforms, I will gladly accept any PRs you may make but I won't be able to help you myself.
 
 * The nature of this crate is super unsafe and sort of defeats the purpose of rust's safety because of the interfacing you require to unsafe C code and the nature of linking to them.
@@ -45,10 +42,9 @@ pub extern fn gmod13_open(state: LuaState) -> i32 {
 	lua_getglobal( state, cstr!("print") );
 	lua_pushstring( state, cstr!("Hello from rust!") );
 	lua_call( state, 1, 0 );
-	
-	// or
 
-	rglua::printgm!(state, "Hello world!");
+	// or
+	printgm!(state, "Hello world!");
 	0
 }
 
