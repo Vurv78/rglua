@@ -15,7 +15,7 @@ Add this to your ``Cargo.toml`` file
 crate-type = ["cdylib"] # This tells rust we want to create a .dll file that links to C code.
 
 [dependencies]
-rglua = "0.5.0"
+rglua = "0.6.0"
 ```
 
 ## Building
@@ -45,6 +45,10 @@ pub extern fn gmod13_open(state: LuaState) -> i32 {
 	lua_getglobal( state, cstr!("print") );
 	lua_pushstring( state, cstr!("Hello from rust!") );
 	lua_call( state, 1, 0 );
+	
+	// or
+
+	rglua::printgm!(state, "Hello world!");
 	0
 }
 
