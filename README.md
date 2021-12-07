@@ -15,7 +15,7 @@ Add this to your ``Cargo.toml`` file
 crate-type = ["cdylib"] # This tells rust we want to create a .dll file that links to C code.
 
 [dependencies]
-rglua = "0.6.0"
+rglua = "0.6.1"
 ```
 
 ## Building
@@ -28,9 +28,7 @@ cargo build --release --target=i686-pc-windows-msvc
 ```
 
 ## Notes
-*  I have never tested this outside of Windows and will not be able to.
-   If there are any issues on other platforms, I will gladly accept any PRs you may make but I won't be able to help you myself.
-
+* This will most likely not work on other platforms and I am not able to vouch/test them.
 * The nature of this crate is super unsafe and sort of defeats the purpose of rust's safety because of the interfacing you require to unsafe C code and the nature of linking to them.
 
 ## Example Module
@@ -39,9 +37,9 @@ use rglua::prelude::*;
 
 #[no_mangle]
 pub extern fn gmod13_open(state: LuaState) -> i32 {
-	lua_getglobal( state, cstr!("print") );
-	lua_pushstring( state, cstr!("Hello from rust!") );
-	lua_call( state, 1, 0 );
+	lua_getglobal(state, cstr!("print"));
+	lua_pushstring(state, cstr!("Hello from rust!"));
+	lua_call(state, 1, 0);
 
 	// or
 	printgm!(state, "Hello world!");
