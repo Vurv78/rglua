@@ -6,9 +6,10 @@
 /// Will panic if passed an expression that a CString could not be created from.
 /// # Examples
 /// ```rust
+/// use rglua::prelude::*;
 /// let a = b"Hello world!".as_ptr() as *const i8;
 /// let b = cstr!("Hello world!");
-/// assert_eq!(*a, *b);
+/// unsafe { assert_eq!(*a, *b) };
 /// ```
 #[macro_export]
 macro_rules! cstr {
@@ -26,9 +27,10 @@ macro_rules! cstr {
 /// or if it is a value, makes a cstring and returns the pointer to it.
 /// # Examples
 /// ```rust
+/// use rglua::prelude::*;
 /// let a = b"Hello world!".as_ptr() as *const i8;
 /// let b = try_cstr!("Hello world!");
-/// assert_eq!(*a, *b.unwrap());
+/// unsafe { assert_eq!(*a, *b) } ;
 /// ```
 #[macro_export]
 macro_rules! try_cstr {
@@ -45,6 +47,7 @@ macro_rules! try_cstr {
 /// Will panic if the const char* is not valid utf-8
 /// # Examples
 /// ```rust
+/// use rglua::prelude::*;
 /// let cstr = cstr!("Hello World");
 /// let rust_str = rstr!(cstr);
 /// assert_eq!(rust_str, "Hello World");
@@ -62,9 +65,10 @@ macro_rules! rstr {
 /// Tries to convert a const char* to an &str
 /// # Examples
 /// ```rust
+/// use rglua::prelude::*;
 /// let cstr = cstr!("Hello World");
 /// let rstr = try_rstr!(cstr);
-/// assert(rstr.is_ok()); // Should be perfectly valid to convert to utf8
+/// assert!(rstr.is_ok()); // Should be perfectly valid to convert to utf8
 /// ```
 macro_rules! try_rstr {
 	($cstring:expr) => {{
@@ -81,7 +85,8 @@ macro_rules! try_rstr {
 /// Rest are varargs.
 /// Can be either a variable storing a str literal, or a referenced String / str variable
 /// # Examples
-/// ```rust
+/// ```ignore
+/// use rglua::prelude::*;
 /// printgm!(state, "Hello {}!", "world");
 /// ```
 macro_rules! printgm {
@@ -101,9 +106,12 @@ macro_rules! printgm {
 /// # Examples
 /// Basic usage
 /// ```rust
+/// use rglua::prelude::*;
+/// extern "C" fn max(l: LuaState) -> i32 { 0 }
+/// extern "C" fn min(l: LuaState) -> i32 { 0 }
 /// let my_library = reg! [
-/// 	"max" = max,
-/// 	"min" = min,
+/// 	"max" => max,
+/// 	"min" => min
 /// ];
 /// ```
 /// Returns a &[crate::types::LuaReg]
