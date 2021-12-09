@@ -1,7 +1,4 @@
-use vtables::VTable;
-use vtables_derive::*;
-
-use super::structs::*;
+use super::prelude::*;
 
 use std::os::raw::c_char;
 

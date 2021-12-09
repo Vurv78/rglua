@@ -1,5 +1,4 @@
-use vtables::VTable;
-use vtables_derive::*;
+use super::prelude::*;
 
 #[has_vtable]
 #[derive(VTable)]

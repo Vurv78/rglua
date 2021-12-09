@@ -3,11 +3,10 @@
 #![allow(non_upper_case_globals)]
 
 pub mod globals;
-mod helper;
+#[macro_use]
+pub mod util;
 #[cfg(feature = "interfaces")]
 pub mod interface;
-#[cfg(feature = "interfaces")]
-mod interfaces;
 pub mod types;
 
 #[macro_use]

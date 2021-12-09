@@ -12,20 +12,20 @@ pub mod Lua {
 	pub static NUMTYPES: c_int = 9;
 	pub static NUMTAGS: c_int = NUMTYPES;
 
-	// Proper enums to use. Cast these to integers when using them
-	pub enum Type {
-		None = -1,
-		Nil,
-		Bool,
-		LUserData,
-		Number,
-		String,
-		Table,
-		Function,
-		UserData,
-		Thread,
+	pub mod Type {
+		pub const None: i32 = -1;
+		pub const Nil: i32 = 0;
+		pub const Bool: i32 = 1;
+		pub const LUserData: i32 = 2;
+		pub const Number: i32 = 3;
+		pub const String: i32 = 4;
+		pub const Table: i32 = 5;
+		pub const Function: i32 = 6;
+		pub const UserData: i32 = 7;
+		pub const Thread: i32 = 8;
 	}
 
+	#[repr(i32)]
 	pub enum Status {
 		Ok = 0,
 		Yield,
@@ -68,6 +68,7 @@ pub mod Lua {
 }
 
 pub mod Jit {
+	#[repr(i32)]
 	pub enum Mode {
 		ENGINE,
 		DEBUG,
