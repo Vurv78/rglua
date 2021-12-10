@@ -2,7 +2,7 @@
 
 /// Creates *const i8 from a &str
 /// This either takes a literal and appends a null char (\0) to it.
-/// or if it is a value, makes a cstring and returns the pointer to it.
+/// or if it is an expression, tries to make a CString from it.
 /// Will panic if passed an expression that a CString could not be created from.
 /// # Examples
 /// ```rust
@@ -10,27 +10,33 @@
 /// let a = b"Hello world!".as_ptr() as *const i8;
 /// let b = cstr!("Hello world!");
 /// unsafe { assert_eq!(*a, *b) };
+///
+/// let c = "Hello world!";
+/// let d = cstr!(c); // Macro doesn't know this is a literal, so it will try to make a CString
+/// unsafe { assert_eq!(*b, *d.as_ptr()) };
 /// ```
 #[macro_export]
 macro_rules! cstr {
 	($rstring:literal) => {
 		concat!($rstring, "\0").as_ptr() as *const i8
 	};
-	($rstring:expr) => {{
-		let cstr = CString::new($rstring).expect("Couldn't make CString from rust string");
-		cstr.as_ptr()
-	}};
+	($rstring:expr) => {
+		std::ffi::CString::new($rstring).expect("Couldn't make CString from rust string")
+	};
 }
 
 /// Tries to create a *const i8 from a &str
 /// This either takes a literal and appends a null char (\0) to it.
 /// or if it is a value, makes a cstring and returns the pointer to it.
 /// # Examples
-/// ```rust
+/// ```rust, should_panic
 /// use rglua::prelude::*;
 /// let a = b"Hello world!".as_ptr() as *const i8;
 /// let b = try_cstr!("Hello world!");
 /// unsafe { assert_eq!(*a, *b) } ;
+///
+/// let c = "Invalid! 👎 \0"; // Cannot have nulls inside of it.
+/// let d = try_cstr!(c).unwrap();
 /// ```
 #[macro_export]
 macro_rules! try_cstr {
@@ -38,8 +44,7 @@ macro_rules! try_cstr {
 		concat!($rstring, "\0").as_ptr() as *const i8
 	};
 	($rstring:expr) => {{
-		let cstr = CString::new($rstring);
-		cstr.map(|cstr| cstr.as_ptr())
+		std::ffi::CString::new($rstring)
 	}};
 }
 
@@ -113,6 +118,8 @@ macro_rules! printgm {
 /// 	"max" => max,
 /// 	"min" => min
 /// ];
+/// assert_eq!(my_library.len(), 3); // 2 functions + 1 internal null terminator
+/// unsafe { assert_eq!(my_library[0].name, cstr!("max")) }; // Internally this is turned into &[ LuaReg { name: cstr!("max"), func: max }, ... ];
 /// ```
 /// Returns a &[crate::types::LuaReg]
 #[macro_export]

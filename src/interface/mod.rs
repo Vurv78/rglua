@@ -15,13 +15,25 @@ pub use lua::{ILuaInterface, CLuaShared};
 pub use panel::{IPanel};
 
 use crate::try_cstr;
-use std::ffi::{c_void, CString};
+use std::ffi::c_void;
 use libloading::{Library, Symbol};
 
 pub type CreateInterfaceFn = extern "system" fn(pName: *const i8, pReturnCode: *mut i32) -> *mut c_void;
 
-///  # Safety
-/// This function is unsafe to transmute the internal libloading symbol to a proper createinterface function pointer.
+/// Gets a handle to provided source interface
+/// # Arguments
+/// * `file` - Filename of the interface dll, linked to gmod. For example "engine.dll"
+/// # Safety
+/// This function internally gets the symbol to the CreateInterface function and casts it to the desired interface provided
+/// So make sure you pass the correct interface type and a valid dll.
+/// # Examples
+/// ```rust, no_run
+/// use rglua::interface::get_interface_handle;
+/// unsafe {
+/// 	let vgui = get_interface_handle("vgui2.dll")
+/// 		.expect("Couldn't link to vgui2.dll");
+/// };
+/// ```
 pub unsafe fn get_interface_handle(file: &str) -> Result<CreateInterfaceFn, libloading::Error> {
 	let lib = Library::new(file)?;
 	let sym: Symbol<CreateInterfaceFn> = lib.get(b"CreateInterface\0")?;
@@ -39,6 +51,37 @@ pub enum InterfaceError {
 	FactoryNotFound,
 }
 
+/// Tries to get source interface from given interface name, and handle to it acquired from [get_interface_handle]
+/// # Arguments
+/// * `iface` - name of the interface to get, for example "VGUI_Panel009"
+/// * `factory` - handle to the interface, acquired from [get_interface_handle]
+/// # Examples
+/// Getting the raw PaintTraverse function from vgui:
+/// ```no_run
+/// // Wrappers to these interfaces are already provided but they do not give raw function pointers which is needed to detour / modify the functions
+/// // in any way, which you may want to do here, especially for painttraverse since you can safely run lua here if you queue it from a thread to avoid crashes.
+/// use rglua::interface::{get_interface_handle, get_from_interface, IPanel};
+/// type PaintTraverseFn = extern "fastcall" fn(&'static IPanel, usize, bool, bool);
+/// let handle = unsafe { get_interface_handle("vgui2.dll").unwrap() };
+///
+/// let vgui_interface = get_from_interface("VGUI_Panel009", handle)
+/// 	.unwrap() as *mut IPanel;
+///
+/// unsafe {
+/// 	// Use as_ref to access fields of the interface
+///		let panel_iface = vgui_interface
+/// 		.as_ref() // Unsafe as Rust doesn't know whether the interface is really valid or not
+/// 		.unwrap();
+///
+///
+/// 	// Transmute the function address from the offset into our known signature
+/// 	let paint_traverse: PaintTraverseFn = std::mem::transmute(
+/// 		(panel_iface.vtable as *mut *mut std::ffi::c_void)
+/// 			.offset(41) // vtable offset as seen in [interface/panel.rs]
+/// 			.read()
+/// 	);
+/// }
+/// ```
 pub fn get_from_interface(
 	iface: &str,
 	factory: CreateInterfaceFn,
@@ -47,7 +90,7 @@ pub fn get_from_interface(
 
 	let iface = try_cstr!(iface)?;
 
-	let result = factory(iface, &mut status);
+	let result = factory(iface.as_ptr(), &mut status);
 
 	if status == 0 && !result.is_null() {
 		Ok(result as *mut ())

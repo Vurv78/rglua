@@ -3,10 +3,15 @@ use crate::types::*;
 pub mod Lua {
 	use super::c_int;
 
+	/// Index of the lua registry. What you'd get from debug.getregistry()
 	pub static REGISTRYINDEX: c_int = -10000;
+	/// Index of the lua environment.
+	/// This is like getfenv() or _ENV in later lua versions
 	pub static ENVIRONINDEX: c_int = -10001;
+	/// Index of _G
 	pub static GLOBALSINDEX: c_int = -10002;
 
+	/// Number of returns to use in functions like lua_pcall to represent 0 or more.
 	pub static MULTRET: c_int = -1;
 
 	pub static NUMTYPES: c_int = 9;
