@@ -1,4 +1,5 @@
 #[repr(C)]
+#[allow(non_snake_case)]
 pub struct PlayerInfo {
 	unknown: u64,
 	xuid: u64,

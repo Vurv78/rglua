@@ -3,9 +3,14 @@ use std::path::PathBuf;
 
 use once_cell::sync::Lazy;
 
-// Raw bindings
-mod raw;
-pub use raw::*;
+mod shared;
+pub use shared::*;
+
+mod globals;
+pub use globals::*;
+
+pub mod types;
+pub use types::*;
 
 // Keep separate in case needed by crates.
 pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {

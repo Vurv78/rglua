@@ -1,24 +1,59 @@
+#![allow(non_snake_case)]
+
 pub(crate) mod prelude {
 	pub(crate) use vtables::VTable;
 	pub(crate) use vtables_derive::*;
 
 	pub(crate) use crate::interface::common::PlayerInfo;
+	pub(crate) use std::os::raw::{c_char, c_int, c_uchar, c_ushort, c_void};
+
+	#[cfg(feature = "userdata")]
+	pub(crate) use crate::userdata::Vector;
+
+	macro_rules! iface {
+		(
+			$(#[$outer:meta])*
+			$vis:vis abstract struct $iface:ident {};
+			$($rest:tt)*
+		) => {
+			$(#[$outer])*
+			#[derive(VTable)]
+			#[vtables_derive::has_vtable]
+			$vis struct $iface {
+				pub vtable: usize
+			}
+			impl crate::interface::Interface for $iface {
+				unsafe fn get_raw(&self, offset: isize) -> *mut std::ffi::c_void {
+					(self.vtable as *mut *mut std::ffi::c_void).offset(offset).read()
+				}
+			}
+			iface!( $($rest)* );
+		};
+		() => ();
+	}
+
+	pub(crate) use iface;
 }
 
 mod common;
+mod cvar;
 mod engine;
 mod lua;
+mod materials;
 mod panel;
 
+pub use cvar::ICVar;
 pub use engine::EngineClient;
-pub use lua::{ILuaInterface, CLuaShared};
-pub use panel::{IPanel};
+pub use lua::{CLuaShared, ILuaInterface, ILuaObject};
+pub use materials::IMaterialSystem;
+pub use panel::IPanel;
 
 use crate::try_cstr;
-use std::ffi::c_void;
 use libloading::{Library, Symbol};
+use std::ffi::c_void;
 
-pub type CreateInterfaceFn = extern "system" fn(pName: *const i8, pReturnCode: *mut i32) -> *mut c_void;
+pub type CreateInterfaceFn =
+	extern "system" fn(pName: *const i8, pReturnCode: *mut i32) -> *mut c_void;
 
 /// Gets a handle to provided source interface
 /// # Arguments
@@ -30,8 +65,8 @@ pub type CreateInterfaceFn = extern "system" fn(pName: *const i8, pReturnCode: *
 /// ```rust, no_run
 /// use rglua::interface::get_interface_handle;
 /// unsafe {
-/// 	let vgui = get_interface_handle("vgui2.dll")
-/// 		.expect("Couldn't link to vgui2.dll");
+///     let vgui = get_interface_handle("vgui2.dll")
+///         .expect("Couldn't link to vgui2.dll");
 /// };
 /// ```
 pub unsafe fn get_interface_handle(file: &str) -> Result<CreateInterfaceFn, libloading::Error> {
@@ -65,21 +100,22 @@ pub enum InterfaceError {
 /// let handle = unsafe { get_interface_handle("vgui2.dll").unwrap() };
 ///
 /// let vgui_interface = get_from_interface("VGUI_Panel009", handle)
-/// 	.unwrap() as *mut IPanel;
+///     .unwrap() as *mut IPanel;
 ///
 /// unsafe {
-/// 	// Use as_ref to access fields of the interface
-///		let panel_iface = vgui_interface
-/// 		.as_ref() // Unsafe as Rust doesn't know whether the interface is really valid or not
-/// 		.unwrap();
+///     // Use as_ref to access fields of the interface
+///     let panel_iface = vgui_interface
+///         .as_ref() // Unsafe as Rust doesn't know whether the interface is really valid or not
+///         .unwrap();
 ///
 ///
-/// 	// Transmute the function address from the offset into our known signature
-/// 	let paint_traverse: PaintTraverseFn = std::mem::transmute(
-/// 		(panel_iface.vtable as *mut *mut std::ffi::c_void)
-/// 			.offset(41) // vtable offset as seen in [interface/panel.rs]
-/// 			.read()
-/// 	);
+///     // Transmute the function address from the offset into our known signature
+///     // You should use Interface.get_raw for this though
+///     let paint_traverse: PaintTraverseFn = std::mem::transmute(
+///         (panel_iface.vtable as *mut *mut std::ffi::c_void)
+///             .offset(41) // vtable offset as seen in [interface/panel.rs]
+///             .read()
+///     );
 /// }
 /// ```
 pub fn get_from_interface(
@@ -97,4 +133,15 @@ pub fn get_from_interface(
 	} else {
 		Err(InterfaceError::FactoryNotFound)
 	}
+}
+
+pub trait Interface {
+	/// Retrieves a pointer to a function in the interface from the given offset.
+	/// # Arguments
+	/// * `offset` - offset of the function in the interface. E.g. `41` for PaintTraverse
+	/// # Examples
+	/// Todo!
+	/// # Safety
+	/// This is unsafe as it reads raw memory from the vtable. Might want to make sure it's valid
+	unsafe fn get_raw(&self, offset: isize) -> *mut c_void;
 }

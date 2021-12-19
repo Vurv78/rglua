@@ -1,9 +1,7 @@
 use super::prelude::*;
 
-#[has_vtable]
-#[derive(VTable)]
-pub struct IPanel {
-	pub vtable: usize,
+iface! {
+	pub abstract struct IPanel {};
 }
 
 impl IPanel {

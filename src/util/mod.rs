@@ -90,18 +90,21 @@ macro_rules! try_rstr {
 /// Rest are varargs.
 /// Can be either a variable storing a str literal, or a referenced String / str variable
 /// # Examples
-/// ```ignore
+/// ```rust
 /// use rglua::prelude::*;
-/// printgm!(state, "Hello {}!", "world");
+/// fn gmod13_open(l: LuaState) {
+///     let world = "world";
+///     printgm!(l, "Hello {}!", world);
+/// }
 /// ```
 macro_rules! printgm {
 	($state:expr, $($x:expr),*) => {
 		{
 			let printargs = format!( $($x,)* );
 			if let Ok(fmt) = std::ffi::CString::new(printargs) {
-				rglua::lua_shared::lua_getglobal( $state, rglua::cstr!("print") );
-				rglua::lua_shared::lua_pushstring( $state, fmt.as_ptr() );
-				rglua::lua_shared::lua_call( $state, 1, 0 );
+				rglua::lua::lua_getglobal( $state, rglua::cstr!("print") );
+				rglua::lua::lua_pushstring( $state, fmt.as_ptr() );
+				rglua::lua::lua_call( $state, 1, 0 );
 			}
 		}
 	};
@@ -115,8 +118,8 @@ macro_rules! printgm {
 /// extern "C" fn max(l: LuaState) -> i32 { 0 }
 /// extern "C" fn min(l: LuaState) -> i32 { 0 }
 /// let my_library = reg! [
-/// 	"max" => max,
-/// 	"min" => min
+///     "max" => max,
+///     "min" => min
 /// ];
 /// assert_eq!(my_library.len(), 3); // 2 functions + 1 internal null terminator
 /// unsafe { assert_eq!(my_library[0].name, cstr!("max")) }; // Internally this is turned into &[ LuaReg { name: cstr!("max"), func: max }, ... ];
@@ -130,7 +133,7 @@ macro_rules! reg {
 }
 
 use crate::types::LuaState;
-/// Prints out the current state of the lua stack without affecting it.
+/// Returns the current state of the lua stack without affecting it.
 /// Comes out in this format:
 /// ```text
 /// [1] 'number' = 5000
@@ -139,27 +142,32 @@ use crate::types::LuaState;
 /// [4] 'function' = 0x138252
 /// [5] 'nil' = nil
 /// ```
-pub fn dump_stack(L: LuaState) {
-	use crate::globals::Lua::Type::*;
-	use crate::lua_shared::*;
+pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
+	use std::fmt::Write;
 
-	let top = lua_gettop(L);
+	use crate::lua::{Type, *};
+	let mut buf = String::new();
+
+	let top = lua_gettop(l);
 	for i in 1..=top {
-		print!("[{}] '{}' = ", i, rstr!(luaL_typename(L, i)));
-		match lua_type(L, i) {
-			Number => println!("{}", lua_tonumber(L, i)),
-			String => println!("{}", rstr!(lua_tostring(L, i))),
-			Bool => println!(
+		write!(&mut buf, "[{}] '{}' = ", i, rstr!(luaL_typename(l, i)));
+		match lua_type(l, i) {
+			Type::Number => write!(&mut buf, "{}", lua_tonumber(l, i)),
+			Type::String => write!(&mut buf, "{}", rstr!(lua_tostring(l, i))),
+			Type::Bool => write!(
+				&mut buf,
 				"{}",
-				if lua_toboolean(L, i) == 1 {
+				if lua_toboolean(l, i) == 1 {
 					"true"
 				} else {
 					"false"
 				}
 			),
-			Nil => println!("nil"),
-			None => println!("none"),
-			_ => println!("{:p}", lua_topointer(L, i)),
-		}
+			Type::Nil => write!(&mut buf, "nil"),
+			Type::None => write!(&mut buf, "none"),
+			_ => write!(&mut buf, "{:p}", lua_topointer(l, i)),
+		}?
 	}
+
+	Ok(buf)
 }

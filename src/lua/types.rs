@@ -26,8 +26,8 @@ pub struct LuaReg {
 	pub func: Option<LuaCFunction>,
 }
 
-pub type LuaJITProfileCallback = extern "C" fn(data: *mut c_void, l: LuaState, samples: c_int, vmL: c_int) -> ();
-
+pub type LuaJITProfileCallback =
+	extern "C" fn(data: *mut c_void, l: LuaState, samples: c_int, vmL: c_int) -> ();
 
 #[repr(C)]
 pub struct LuaBuffer {
