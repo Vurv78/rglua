@@ -51,7 +51,7 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 				syn::Pat::Wild(_) => {
 					panic!("Parameter must be named. Try _foo");
 				}
-				ref e => panic!("Parameter must be in ``ident: ty`` format, got {:?}", e),
+				_ => panic!("Parameter must be in ``ident: ty`` format"),
 			}
 		}
 	}
