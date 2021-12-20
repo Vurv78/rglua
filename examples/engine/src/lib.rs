@@ -12,7 +12,8 @@ fn get_iface() -> anyhow::Result<&'static EngineClient> {
 	}
 }
 
-extern "C" fn concmd(l: LuaState) -> i32 {
+#[lua_function]
+fn concmd(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => {
 			iface.ExecuteClientCmd( luaL_checklstring(l, 1, 0) );
@@ -22,7 +23,8 @@ extern "C" fn concmd(l: LuaState) -> i32 {
 	0
 }
 
-extern "C" fn get_resolution(l: LuaState) -> i32 {
+#[lua_function]
+fn get_resolution(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => unsafe {
 			let (w, h): (*mut _, *mut _) = (&mut 0, &mut 0);
@@ -38,7 +40,8 @@ extern "C" fn get_resolution(l: LuaState) -> i32 {
 	0
 }
 
-extern "C" fn get_directory(l: LuaState) -> i32 {
+#[lua_function]
+fn get_directory(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => {
 			let dir = iface.GetGameDirectory();
@@ -52,7 +55,8 @@ extern "C" fn get_directory(l: LuaState) -> i32 {
 	0
 }
 
-extern "C" fn get_level(l: LuaState) -> i32 {
+#[lua_function]
+fn get_level(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => {
 			let level = iface.GetLevelName();
@@ -66,7 +70,8 @@ extern "C" fn get_level(l: LuaState) -> i32 {
 	0
 }
 
-extern "C" fn is_recording(l: LuaState) -> i32 {
+#[lua_function]
+fn is_recording(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => {
 			let demo = iface.IsRecordingDemo();
@@ -80,7 +85,8 @@ extern "C" fn is_recording(l: LuaState) -> i32 {
 	0
 }
 
-extern "C" fn is_paused(l: LuaState) -> i32 {
+#[lua_function]
+fn is_paused(l: LuaState) -> i32 {
 	match get_iface() {
 		Ok(iface) => {
 			let paused = iface.IsPaused();
@@ -94,8 +100,8 @@ extern "C" fn is_paused(l: LuaState) -> i32 {
 	0
 }
 
-#[no_mangle]
-extern "C" fn gmod13_open(l: LuaState) -> i32 {
+#[gmod_open]
+fn open(l: LuaState) -> i32 {
 	printgm!(l, "Loaded engine module!");
 
 	let lib = reg! [
@@ -111,7 +117,7 @@ extern "C" fn gmod13_open(l: LuaState) -> i32 {
 	0
 }
 
-#[no_mangle]
-extern "C" fn gmod13_close(_: LuaState) -> i32 {
+#[gmod_close]
+fn close(_l: LuaState) -> i32 {
 	0
 }

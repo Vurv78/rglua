@@ -1,7 +1,7 @@
 [package]
 name = "gmod_is_even"
 description = "Binary module that exposes a function called 'is_even' that does what it says."
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 publish = false
 

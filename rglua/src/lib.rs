@@ -15,6 +15,8 @@ pub use lua as lua_shared;
 )]
 pub use lua::types;
 
+pub use rglua_macros::*;
+
 pub mod prelude;
 
 #[cfg(feature = "userdata")]

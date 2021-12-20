@@ -19,8 +19,8 @@ extern "C" fn is_odd(l: LuaState) -> i32 {
 	1
 }
 
-#[no_mangle]
-extern "C" fn gmod13_open(l: LuaState) -> i32 {
+#[gmod_open]
+fn open(l: LuaState) -> i32 {
 	// Print to the gmod console
 	printgm!(l, "Loaded is_even module!");
 
@@ -36,8 +36,8 @@ extern "C" fn gmod13_open(l: LuaState) -> i32 {
 	1
 }
 
-#[no_mangle]
-extern "C" fn gmod13_close(l: LuaState) -> i32 {
+#[gmod_close]
+fn close(l: LuaState) -> i32 {
 	printgm!(l, "Goodbye garrysmod!");
 	0
 }

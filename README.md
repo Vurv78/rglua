@@ -14,7 +14,24 @@ cargo build --release --target=i686-pc-windows-msvc
 ### [garrysmod_common](https://github.com/danielga/garrysmod_common)
 This is heavily based off of garrysmod_common, in how we export the lua_shared functions and trying to replicate everything from the Lua C Api.
 
-
 ## Comparison
-There are actually a decent amount of libraries out there for gmod development
+There are actually a decent amount of libraries out there for gmod development.
+Here's a comparison and why you could use this one.
 
+[rglua]: https://crates.io/crates/rglua
+[rust-glua-sys]: https://github.com/SpiralP/rust-glua-sys
+[gmod-rs]: https://crates.io/crates/gmod
+[gmrs]: https://github.com/diogo464/gmrs
+
+| Library                           | [rglua] | [rust-glua-sys] | [gmod-rs]  | [gmrs] |
+|-----------------------------------|---------|-----------------|------------|--------|
+| Lua C Api Bindings                | ✔️     | ✔️              | ✔️         | ❌    |
+| Crates.io                         | ✔️     | ❌              | ✔️         | ❌    |
+| Proc Macros                       | ✔️     | ❌              | ✔️         | ✔️    |
+| Interfacing w/  Source SDK        | ✔️     | ❌              | ❌         | ❌    |
+| Returning Result<> from functions | ✔️	 | ❌              | ❌         | ❌    |
+| Can be used on stable             | ✔️     | ✔️              | ❌         | ✔️    |
+| Real world examples               | ✔️     | ❌              | ✔️         | ❌    |
+| Github Stars                      | 😢     | 👍              | 👑         | 🤷‍♂️    |
+
+__*You can help with that last one 😉*__
