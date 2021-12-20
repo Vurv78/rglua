@@ -29,7 +29,7 @@ Here's a comparison and why you could use this one.
 | Crates.io                         | ✔️     | ❌              | ✔️         | ❌    |
 | Proc Macros                       | ✔️     | ❌              | ✔️         | ✔️    |
 | Interfacing w/  Source SDK        | ✔️     | ❌              | ❌         | ❌    |
-| Returning Result<> from functions | ✔️	 | ❌              | ❌         | ❌    |
+| Returning Result<> from functions | ✔️	 | ❌              | ❌         | ✔️    |
 | Can be used on stable             | ✔️     | ✔️              | ❌         | ✔️    |
 | Real world examples               | ✔️     | ❌              | ✔️         | ❌    |
 | Github Stars                      | 😢     | 👍              | 👑         | 🤷‍♂️    |
