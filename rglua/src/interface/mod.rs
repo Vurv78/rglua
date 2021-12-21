@@ -22,11 +22,6 @@ pub(crate) mod prelude {
 			$vis struct $iface {
 				pub vtable: usize
 			}
-			impl crate::interface::Interface for $iface {
-				unsafe fn get_raw(&self, offset: isize) -> *mut std::ffi::c_void {
-					(self.vtable as *mut *mut std::ffi::c_void).offset(offset).read()
-				}
-			}
 			iface!( $($rest)* );
 		};
 		() => ();
@@ -133,15 +128,4 @@ pub fn get_from_interface(
 	} else {
 		Err(InterfaceError::FactoryNotFound)
 	}
-}
-
-pub trait Interface {
-	/// Retrieves a pointer to a function in the interface from the given offset.
-	/// # Arguments
-	/// * `offset` - offset of the function in the interface. E.g. `41` for PaintTraverse
-	/// # Examples
-	/// Todo!
-	/// # Safety
-	/// This is unsafe as it reads raw memory from the vtable. Might want to make sure it's valid
-	unsafe fn get_raw(&self, offset: isize) -> *mut c_void;
 }

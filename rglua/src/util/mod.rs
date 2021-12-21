@@ -102,9 +102,9 @@ macro_rules! printgm {
 		{
 			let printargs = format!( $($x,)* );
 			if let Ok(fmt) = std::ffi::CString::new(printargs) {
-				rglua::lua::lua_getglobal( $state, rglua::cstr!("print") );
-				rglua::lua::lua_pushstring( $state, fmt.as_ptr() );
-				rglua::lua::lua_call( $state, 1, 0 );
+				$crate::lua::lua_getglobal( $state, $crate::cstr!("print") );
+				$crate::lua::lua_pushstring( $state, fmt.as_ptr() );
+				$crate::lua::lua_call( $state, 1, 0 );
 			}
 		}
 	};
@@ -128,7 +128,7 @@ macro_rules! printgm {
 #[macro_export]
 macro_rules! reg {
 	( $( $name:expr => $func:expr ),* ) => {
-		&[ $( rglua::types::LuaReg { name: rglua::cstr!($name), func: Some($func) } ),*, rglua::types::LuaReg { name: std::ptr::null(), func: None } ]
+		&[ $( $crate::types::LuaReg { name: $crate::cstr!($name), func: Some($func) } ),*, $crate::types::LuaReg { name: std::ptr::null(), func: None } ]
 	};
 }
 
@@ -145,16 +145,17 @@ use crate::types::LuaState;
 pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
 	use std::fmt::Write;
 
-	use crate::lua::{Type, *};
+	use crate::lua::*;
+
 	let mut buf = String::new();
 
 	let top = lua_gettop(l);
 	for i in 1..=top {
 		write!(&mut buf, "[{}] '{}' = ", i, rstr!(luaL_typename(l, i)));
 		match lua_type(l, i) {
-			Type::Number => write!(&mut buf, "{}", lua_tonumber(l, i)),
-			Type::String => write!(&mut buf, "{}", rstr!(lua_tostring(l, i))),
-			Type::Bool => write!(
+			TNUMBER => write!(&mut buf, "{}", lua_tonumber(l, i)),
+			TSTRING => write!(&mut buf, "{}", rstr!(lua_tostring(l, i))),
+			TBOOLEAN => write!(
 				&mut buf,
 				"{}",
 				if lua_toboolean(l, i) == 1 {
@@ -163,8 +164,8 @@ pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
 					"false"
 				}
 			),
-			Type::Nil => write!(&mut buf, "nil"),
-			Type::None => write!(&mut buf, "none"),
+			TNIL => write!(&mut buf, "nil"),
+			TNONE => write!(&mut buf, "none"),
 			_ => write!(&mut buf, "{:p}", lua_topointer(l, i)),
 		}?
 	}
