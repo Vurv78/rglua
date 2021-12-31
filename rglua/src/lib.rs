@@ -6,13 +6,6 @@ pub mod interface;
 #[macro_use]
 pub mod lua;
 
-#[deprecated(since = "0.8.0", note = "Use rglua::lua instead")]
-pub use lua as lua_shared;
-
-#[deprecated(
-	since = "0.8.0",
-	note = "Use rglua::lua::* or rglua::lua::types instead"
-)]
 pub use lua::types;
 
 pub use rglua_macros::*;

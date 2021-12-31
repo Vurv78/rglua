@@ -1,0 +1,12 @@
+[package]
+name = "vector"
+description = "Binary module that adds some extra functions to the gmod Vector type"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rglua = { path = "../../rglua" }

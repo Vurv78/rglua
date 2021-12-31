@@ -12,11 +12,13 @@ pub(crate) mod prelude {
 
 	macro_rules! iface {
 		(
-			$(#[$outer:meta])*
+			#[ version ( $ver:literal ) ]
+			#[ file ( $file:literal ) ]
+			$(#[$attr:meta])*
 			$vis:vis abstract struct $iface:ident {};
 			$($rest:tt)*
 		) => {
-			$(#[$outer])*
+			$(#[$attr])*
 			#[derive(VTable)]
 			#[vtables_derive::has_vtable]
 			$vis struct $iface {
@@ -35,12 +37,14 @@ mod cvar;
 mod engine;
 mod lua;
 mod materials;
+mod mdl;
 mod panel;
 
 pub use cvar::ICVar;
 pub use engine::EngineClient;
 pub use lua::{CLuaShared, ILuaInterface, ILuaObject};
 pub use materials::IMaterialSystem;
+pub use mdl::{IMdlCache, IMdlCacheNotify};
 pub use panel::IPanel;
 
 use crate::try_cstr;

@@ -4,8 +4,8 @@ use super::prelude::*;
 use std::os::raw::c_char;
 
 iface! {
-	/// VEngineClient015
-	/// Offsets are confirmed correct as of 12/19/2021
+	#[version("VEngineClient015")]
+	#[file("engine.dll")]
 	pub abstract struct EngineClient {};
 }
 

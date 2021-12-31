@@ -1,7 +1,8 @@
 use rglua::prelude::*;
 
 // The functions we want to provide to lua
-extern "C" fn is_even(l: LuaState) -> i32 {
+#[lua_function]
+fn is_even(l: LuaState) -> i32 {
 	let num = luaL_checkinteger(l, 1);
 	// Ask for the first argument of the function.
 	// If this is the wrong type or missing, an error will be thrown to lua (if you don't want this, use the lua_to* functions)
@@ -12,13 +13,16 @@ extern "C" fn is_even(l: LuaState) -> i32 {
 	1
 }
 
-extern "C" fn is_odd(l: LuaState) -> i32 {
+#[lua_function]
+fn is_odd(l: LuaState) -> i32 {
 	let num = luaL_checkinteger(l, 1);
 
 	lua_pushboolean(l, (num % 2 != 0) as i32);
 	1
 }
 
+// Note that since this is #[gmod_open] the name of the function does not matter
+// This is the same for #[gmod_close]
 #[gmod_open]
 fn open(l: LuaState) -> i32 {
 	// Print to the gmod console
@@ -31,7 +35,7 @@ fn open(l: LuaState) -> i32 {
 	];
 
 	// Register our functions in ``_G.math``
-	// This WILL NOT overwrite _G.math if it already exists ()
+	// This WILL NOT overwrite _G.math if it already exists (which it should..)
 	luaL_register(l, cstr!("math"), lib.as_ptr());
 	1
 }

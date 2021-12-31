@@ -154,7 +154,7 @@ pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
 		write!(&mut buf, "[{}] '{}' = ", i, rstr!(luaL_typename(l, i)));
 		match lua_type(l, i) {
 			TNUMBER => write!(&mut buf, "{}", lua_tonumber(l, i)),
-			TSTRING => write!(&mut buf, "{}", rstr!(lua_tostring(l, i))),
+			TSTRING => write!(&mut buf, "{}", rstr!(lua_tostring(l, i).unwrap())),
 			TBOOLEAN => write!(
 				&mut buf,
 				"{}",
@@ -166,7 +166,9 @@ pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
 			),
 			TNIL => write!(&mut buf, "nil"),
 			TNONE => write!(&mut buf, "none"),
-			_ => write!(&mut buf, "{:p}", lua_topointer(l, i)),
+			TUSERDATA | TLIGHTUSERDATA => write!(&mut buf, "{:p}", lua_touserdata(l, i).unwrap()),
+			TTHREAD => write!(&mut buf, "{:p}", lua_tothread(l, i).unwrap()),
+			_ => write!(&mut buf, "Unknown type"),
 		}?
 	}
 

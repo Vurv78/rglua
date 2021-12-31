@@ -1,7 +1,13 @@
 use super::prelude::*;
 
 iface! {
+	#[version("")]
+	#[file("")]
+	/// You do not get this through creating an interface, it is instead exported by other interface functions.
 	pub abstract struct IMaterial {};
+
+	#[version("VMaterialSystem080")]
+	#[file("materialsystem.dll")]
 	pub abstract struct IMaterialSystem {};
 }
 

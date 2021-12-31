@@ -11,8 +11,8 @@ pub struct ConCommandBase {
 }
 
 iface! {
-	/// VEngineCvar007
-	/// vstdlib.dll
+	#[version("VEngineCvar007")]
+	#[file("vstdlib.dll")]
 	pub abstract struct ICVar {};
 }
 

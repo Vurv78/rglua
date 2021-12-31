@@ -12,13 +12,12 @@ pub use globals::*;
 pub mod types;
 pub use types::*;
 
-// Keep separate in case needed by crates.
-pub static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
+static GMOD_DIR: Lazy<PathBuf> = Lazy::new(|| {
 	// Get the attached process. If you inject or run a binary module, will always GarrysMod directory. If not then you did something wrong.
 	std::env::current_dir().expect("Couldn't get current_dir.")
 });
 
-// Let me know if there's a neater way to do this.
+/// Path to lua_shared.dll relative to [std::env::current_dir()]
 pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 	let mut full: PathBuf;
 
@@ -46,6 +45,9 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 	Some(full)
 });
 
+/// Path to lua_shared.dll relative to [std::env::current_dir()]
+/// This tries to retrieve [LUA_SHARED_PATH], creates a [libloading::Library] to it and returns it.
+/// If it could not find lua_shared.dll or create a [libloading::Library], this will panic!
 pub static LUA_SHARED_RAW: Lazy<Library> = Lazy::new(|| {
 	let path = LUA_SHARED_PATH
 		.as_ref()
