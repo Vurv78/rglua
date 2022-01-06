@@ -28,7 +28,7 @@ Here's a comparison and why you could use this one.
 | Interfacing w/  Source SDK        | ✔️     | ❌              | ❌         | ❌    |
 | Returning Result<> from functions | ✔️	 | ❌              | ❌         | ✔️    |
 | Can be used on stable             | ✔️     | ✔️              | ❌         | ✔️    |
-| Real world examples               | ✔️     | ❌              | 〰️         | ❌    |
+| Real world examples               | ✔️     | ❌              | 〰️         | ✔️    |
 | Linux / OSX Support               | ✔️     | ❌              | ✔️         | ✔️    |
 | Github Stars                      | 😢     | 👍              | 👑         | 🤷‍♂️    |
 
