@@ -3,9 +3,9 @@ use super::prelude::*;
 
 use std::os::raw::c_char;
 
-iface! {
+interfaces! {
 	#[version("VEngineClient015")]
-	#[file("engine.dll")]
+	#[file("engine")]
 	pub abstract struct EngineClient {};
 }
 

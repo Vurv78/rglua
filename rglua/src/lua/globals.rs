@@ -38,62 +38,62 @@ pub const TNUMBER: c_int = 3;
 /// String type, this is a [LuaString]
 pub const TSTRING: c_int = 4;
 
-/// Table type created by [super::lua_newtable]
+/// Table type created by [lua_newtable](super::lua_newtable)
 pub const TTABLE: c_int = 5;
 
-/// Function type created by [super::lua_pushcfunction], [super::lua_pushcclosure] or retrieved from lua.
+/// Function type created by [lua_pushcfunction](super::lua_pushcfunction), [lua_pushcfunction](super::lua_pushcclosure) or retrieved from lua.
 pub const TFUNCTION: c_int = 6;
 
 /// 'Heavy' Userdata type managed by lua.  
-/// Created by [super::lua_newuserdata]
+/// Created by [lua_newuserdata](super::lua_newuserdata)
 pub const TUSERDATA: c_int = 7;
 
-/// Thread / Coroutine type, created by [super::lua_newthread]
+/// Thread / Coroutine type, created by [lua_newthread](super::lua_newthread)
 pub const TTHREAD: c_int = 8;
 
 /// Minimum number of stack levels guaranteed to C whenever it is called into by lua.
 pub const MINSTACK: c_int = 20;
 
-/// OK status code used by several functions like [super::lua_status], [super::lua_pcall]
+/// OK status code used by several functions like [lua_status](super::lua_status), [lua_pcall](super::lua_pcall)
 pub const OK: c_int = 0;
 
-/// YIELD status code used by [super::lua_status]
+/// YIELD status code used by [lua_status](super::lua_status)
 pub const YIELD: c_int = 1;
 
-/// Runtime error, code used by functions like [super::lua_pcall]
+/// Runtime error, code used by functions like [lua_pcall](super::lua_pcall)
 pub const ERRRUN: c_int = 2;
 
-/// Syntax error, code used by functions like [super::lua_load]
+/// Syntax error, code used by functions like [lua_load](super::lua_load)
 pub const ERRSYNTAX: c_int = 3;
 
 /// Memory allocation, error code used by many functions like [super::lua_load]
 pub const ERRMEM: c_int = 4;
 
-/// Error when running the  error handler, code used by functions like [super::lua_pcall]
+/// Error when running the  error handler, code used by functions like [lua_pcall](super::lua_pcall)
 pub const ERRERR: c_int = 5;
 
-/// Enum used with [super::lua_gc] - Stops the garbage collector.
+/// Enum used with [lua_gc](super::lua_gc) - Stops the garbage collector.
 pub const GCSTOP: c_int = 0;
 
-/// Enum used with [super::lua_gc] - Restarts the garbage collector
+/// Enum used with [lua_gc](super::lua_gc) - Restarts the garbage collector
 pub const GCRESTART: c_int = 1;
 
-/// Enum used with [super::lua_gc] - Restarts the garbage collector
+/// Enum used with [lua_gc](super::lua_gc) - Restarts the garbage collector
 pub const GCCOLLECT: c_int = 2;
 
-/// Enum used with [super::lua_gc] - Returns the total number of live Lua objects in the current Lua state
+/// Enum used with [lua_gc](super::lua_gc) - Returns the total number of live Lua objects in the current Lua state
 pub const GCCOUNT: c_int = 3;
 
-/// Enum used with [super::lua_gc] - Returns the total number of live Lua objects in the current Lua state, plus the total number of Lua objects in unreachable threads
+/// Enum used with [lua_gc](super::lua_gc) - Returns the total number of live Lua objects in the current Lua state, plus the total number of Lua objects in unreachable threads
 pub const GCCOUNTB: c_int = 4;
 
-/// Enum used with [super::lua_gc] - Performs a single step of the garbage collector.
+/// Enum used with [lua_gc](super::lua_gc) - Performs a single step of the garbage collector.
 pub const GCSTEP: c_int = 5;
 
-/// Enum used with [super::lua_gc] - Sets `lua_gc`'s pause threshold.
+/// Enum used with [lua_gc](super::lua_gc) - Sets `lua_gc`'s pause threshold.
 pub const GCSETPAUSE: c_int = 6;
 
-/// Enum used with [super::lua_gc] - Sets `lua_gc`'s step multiplier.
+/// Enum used with [lua_gc](super::lua_gc) - Sets `lua_gc`'s step multiplier.
 pub const GCSETSTEPMUL: c_int = 7;
 
 pub const HOOKCALL: c_int = 0;
@@ -102,13 +102,13 @@ pub const HOOKLINE: c_int = 2;
 pub const HOOKCOUNT: c_int = 3;
 pub const HOOKTAILRET: c_int = 4;
 
-/// Enum used by [super::lua_sethook]
+/// Enum used by [lua_sethook](super::lua_sethook)
 pub const MASKCALL: c_int = 1 << HOOKCALL;
-/// Enum used by [super::lua_sethook]
+/// Enum used by [lua_sethook](super::lua_sethook)
 pub const MASKRET: c_int = 1 << HOOKRET;
-/// Enum used by [super::lua_sethook]
+/// Enum used by [lua_sethook](super::lua_sethook)
 pub const MASKLINE: c_int = 1 << HOOKLINE;
-/// Enum used by [super::lua_sethook]
+/// Enum used by [lua_sethook](super::lua_sethook)
 pub const MASKCOUNT: c_int = 1 << HOOKCOUNT;
 
 /// Size of [LuaDebug].short_src
@@ -117,6 +117,9 @@ pub const IDSIZE: usize = 128;
 /// This is libc's default so we'll roll with it
 /// Used internally for [LuaBuffer].
 pub const BUFFERSIZE: usize = 8192;
+
+pub const NOREF: c_int = -2;
+pub const REFNIL: c_int = -1;
 
 /// LuaJIT specific global constants
 pub mod jit {
@@ -127,37 +130,37 @@ pub mod jit {
 	/// Semver number
 	pub const VERSION_NUM: c_int = 20004; /* Version 2.0.4 = 02.00.04. */
 
-	/// Enum used by [crate::lua::luaJIT_setmode]
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode)
 	pub const MODE_MASK: c_int = 0x00ff;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Set mode for the whole JIT engine
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Set mode for the whole JIT engine
 	pub const MODE_ENGINE: c_int = 1;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Set debug mode (idx = level).
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Set debug mode (idx = level).
 	pub const MODE_DEBUG: c_int = 2;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Change mode for a function.
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Change mode for a function.
 	pub const MODE_FUNC: c_int = 3;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Recurse into subroutine protos.
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Recurse into subroutine protos.
 	pub const MODE_ALLFUNC: c_int = 4;
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Change only the subroutines.
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Change only the subroutines.
 	pub const MODE_ALLSUBFUNC: c_int = 5;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Flush a compiled trace.
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Flush a compiled trace.
 	pub const MODE_TRACE: c_int = 6;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Set wrapper mode for C function calls.
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Set wrapper mode for C function calls.
 	pub const MODE_WRAPCFUNC: c_int = 0x10;
 
 	pub const MODE_MAX: c_int = MODE_WRAPCFUNC + 1;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Turn a feature off
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Turn a feature off
 	pub const MODE_OFF: c_int = 0x0000;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Turn a feature on
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Turn a feature on
 	pub const MODE_ON: c_int = 0x0100;
 
-	/// Enum used by [crate::lua::luaJIT_setmode] -- Flush JIT compiled code
+	/// Enum used by [luaJIT_setmode](crate::lua::luaJIT_setmode) -- Flush JIT compiled code
 	pub const MODE_FLUSH: c_int = 0x0200;
 }

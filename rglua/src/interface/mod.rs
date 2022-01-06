@@ -10,7 +10,7 @@ pub(crate) mod prelude {
 	#[cfg(feature = "userdata")]
 	pub(crate) use crate::userdata::Vector;
 
-	macro_rules! iface {
+	macro_rules! interfaces {
 		(
 			#[ version ( $ver:literal ) ]
 			#[ file ( $file:literal ) ]
@@ -24,12 +24,12 @@ pub(crate) mod prelude {
 			$vis struct $iface {
 				pub vtable: usize
 			}
-			iface!( $($rest)* );
+			interfaces!( $($rest)* );
 		};
 		() => ();
 	}
 
-	pub(crate) use iface;
+	pub(crate) use interfaces;
 }
 
 mod common;
@@ -70,9 +70,9 @@ pub type CreateInterfaceFn =
 /// ```
 pub unsafe fn get_interface_handle(file: &str) -> Result<CreateInterfaceFn, libloading::Error> {
 	let lib = Library::new(file)?;
-	let sym: Symbol<CreateInterfaceFn> = lib.get(b"CreateInterface\0")?;
+	let sym: Symbol<CreateInterfaceFn> = lib.get(b"CreateInterface\0".as_ref())?;
 
-	Ok(std::mem::transmute(sym))
+	Ok(*sym)
 }
 
 use thiserror::Error;
@@ -124,7 +124,6 @@ pub fn get_from_interface(
 	let mut status = 0;
 
 	let iface = try_cstr!(iface)?;
-
 	let result = factory(iface.as_ptr(), &mut status);
 
 	if status == 0 && !result.is_null() {

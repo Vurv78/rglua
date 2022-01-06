@@ -12,22 +12,14 @@ macro_rules! dyn_symbols {
 		$vis:vis extern $abi:literal fn $name:ident ( $($arg:ident : $argty:ty),* $(,)? ) -> $ret:ty; $($rest:tt)*
 	) => {
 		$(#[$outer])*
-		#[allow(non_upper_case_globals)]
-		pub static $name: Lazy<extern $abi fn( $($arg: $argty),* ) -> $ret> = Lazy::new(|| unsafe {
-			std::mem::transmute( LUA_SHARED_RAW.get::<extern $abi fn($($argty),*) -> $ret>( stringify!($name).as_bytes() ).unwrap() )
-		});
-		dyn_symbols!( $($rest)* );
-	};
-
-	(
-		$(#[$outer:meta])*
-		$vis:vis extern $abi:literal fn $name:ident <$generic:ident>( $($arg:ident : $argty:ty),* $(,)? ) -> $ret:ty; $($rest:tt)*
-	) => {
-		$(#[$outer])*
-		#[allow(non_upper_case_globals)]
-		pub static $name: Lazy<extern $abi fn( $($arg: $argty),* ) -> $ret> = Lazy::new(|| unsafe {
-			std::mem::transmute( LUA_SHARED_RAW.get::<extern $abi fn($($argty),*) -> $ret>( stringify!($name).as_bytes() ).unwrap() )
-		});
+		#[allow(non_snake_case)]
+		$vis fn $name( $($arg: $argty),* ) -> $ret {
+			unsafe {
+				let f = LUA_SHARED_RAW.get::<extern $abi fn($($argty),*) -> $ret>(stringify!($name).as_bytes())
+					.expect(concat!("Couldn't get extern function: ", stringify!($name)));
+				f( $($arg),* )
+			}
+		}
 		dyn_symbols!( $($rest)* );
 	};
 
@@ -77,7 +69,7 @@ dyn_symbols! {
 		mode: LuaString,
 	) -> c_int;
 
-	/// Loads a buffer as a Lua chunk.
+	/// Loads a buffer as a Lua chunk.  
 	/// This function uses [lua_load] to load the chunk in the buffer pointed to by buff with size ``sz``.
 	pub extern "C" fn luaL_loadbuffer(
 		l: LuaState,
@@ -87,7 +79,7 @@ dyn_symbols! {
 	) -> c_int;
 
 	/// Loads a Lua chunk.
-	/// If there are no errors, lua_load pushes the compiled chunk as a Lua function on top of the stack.
+	/// If there are no errors, this pushes the compiled chunk as a Lua function on top of the stack.  
 	/// Otherwise, it pushes an error message.
 	/// # Parameters
 	/// * `l` - Lua state,
@@ -108,8 +100,8 @@ dyn_symbols! {
 		chunkname: LuaString
 	) -> c_int;
 
-	/// Function used by [lua_load] internally.
-	/// ``mode`` is whether to take the chunk as bytecode or as text.
+	/// Function used by [lua_load] internally.  
+	/// ``mode`` is whether to take the chunk as bytecode or as text.  
 	/// You should just use [lua_load] instead though.
 	pub extern "C" fn lua_loadx(
 		l: LuaState,
@@ -119,36 +111,36 @@ dyn_symbols! {
 		mode: LuaString,
 	) -> c_int;
 
-	/// Loads a string as a Lua chunk. This function uses [lua_load] to load the chunk in the zero-terminated string ``s``.
-	/// This function returns the same results as [lua_load].
+	/// Loads a string as a Lua chunk. This function uses [lua_load] to load the chunk in the zero-terminated string ``s``.  
+	/// This function returns the same results as [lua_load].  
 	/// Also as [lua_load], this function only loads the chunk; it does not run it.
 	pub extern "C" fn luaL_loadstring(l: LuaState, code: LuaString) -> c_int;
 
-	/// Loads a file as a Lua chunk.
-	/// This function uses [lua_load] to load the chunk in the file named ``filename``.
-	/// If filename is None, then it loads from the standard input.
+	/// Loads a file as a Lua chunk.  
+	/// This function uses [lua_load] to load the chunk in the file named ``filename``.  
+	/// If filename is None, then it loads from the standard input.  
 	/// The first line in the file is ignored if it starts with a # (shebang)
 	pub extern "C" fn luaL_loadfile(l: LuaState, filename: Option<LuaString>) -> c_int;
 
-	/// Same as how [lua_loadx] is to [lua_load].
+	/// Same as how [lua_loadx] is to [lua_load].  
 	/// You should probably use [luaL_loadfile] instead.
 	pub extern "C" fn luaL_loadfilex(l: LuaState, filename: LuaString, mode: LuaString) -> c_int;
 }
 
 // Calling lua code
 dyn_symbols! {
-	/// Calls a function in protected mode.
-	/// Both nargs and nresults have the same meaning as in [lua_call].
+	/// Calls a function in protected mode.  
+	/// Both nargs and nresults have the same meaning as in [lua_call].  
 	/// If there are no errors during the call, [lua_pcall] behaves exactly like [lua_call].
 	///
-	/// However, if there is any error, [lua_pcall] catches it, pushes a single value on the stack (the error message), and returns an error code.
+	/// However, if there is any error, [lua_pcall] catches it, pushes a single value on the stack (the error message), and returns an error code.  
 	/// Like [lua_call], [lua_pcall] always removes the function and its arguments from the stack.
 	///
-	/// If errfunc is 0, then the error message returned on the stack is exactly the original error message.
-	/// Otherwise, errfunc is the stack index of an error handler function. (In the current implementation, this index cannot be a pseudo-index like [GLOBALSINDEX])
+	/// If errfunc is 0, then the error message returned on the stack is exactly the original error message.  
+	/// Otherwise, errfunc is the stack index of an error handler function. (In the current implementation, this index cannot be a pseudo-index like [GLOBALSINDEX])  
 	/// In case of runtime errors, this function will be called with the error message and its return value will be the message returned on the stack by [lua_pcall].
 	///
-	/// Typically, the error handler function is used to add more debug information to the error message, such as a stack traceback.
+	/// Typically, the error handler function is used to add more debug information to the error message, such as a stack traceback.  
 	/// Such information cannot be gathered after the return of lua_pcall, since by then the stack has unwound.
 	/// # Returns
 	/// This function returns 0 in case of success or these error codes:
@@ -158,8 +150,8 @@ dyn_symbols! {
 	pub extern "C" fn lua_pcall(l: LuaState, nargs: c_int, nresults: c_int, errfunc: c_int) -> c_int;
 
 
-	/// Calls a function.
-	/// To call a function you must use the following protocol: first, the function to be called is pushed onto the stack;
+	/// Calls a function.  
+	/// To call a function you must use the following protocol: first, the function to be called is pushed onto the stack;  
 	/// then, the arguments to the function are pushed in direct order -- that is, the first argument is pushed first.
 	///
 	/// Finally you call [lua_call].
@@ -168,42 +160,42 @@ dyn_symbols! {
 	/// * `nargs` - The number of arguments that you pushed onto the stack.
 	/// * `nresults` - Number of expected results to push onto the stack, or [MULTRET] to push all results.
 	/// # Stack Behavior
-	/// All arguments and the function value are popped from the stack when the function is called.
+	/// All arguments and the function value are popped from the stack when the function is called.  
 	/// The function results are pushed onto the stack when the function returns in direct order, so the last result is on the top of the stack.
 	pub extern "C" fn lua_call(l: LuaState, nargs: c_int, nresults: c_int) -> c_int;
 
-	/// Calls the C function func in protected mode.
-	/// ``func`` starts with only one element in its stack, a light userdata containing ud.
-	/// In case of errors, this returns the same error codes as lua_pcall, plus the error object on the top of the stack.
-	/// Otherwise, it returns zero, and does not change the stack.
+	/// Calls the C function func in protected mode.  
+	/// ``func`` starts with only one element in its stack, a light userdata containing ud.  
+	/// In case of errors, this returns the same error codes as [lua_pcall], plus the error object on the top of the stack.  
+	/// Otherwise, it returns zero, and does not change the stack.  
 	/// All values returned by func are discarded.
 	pub extern "C" fn lua_cpcall(l: LuaState, func: LuaCFunction, userdata: *mut c_void) -> c_int;
 
-	/// Calls a metamethod.
+	/// Calls a metamethod.  
 	/// If the object at index obj has a metatable and this metatable has a field e, this function calls this field and passes the object as its only argument.
 	/// # Returns
-	/// In this case this function returns 1 and pushes onto the stack the value returned by the call.
+	/// In this case this function returns 1 and pushes onto the stack the value returned by the call.  
 	/// If there is no metatable or no metamethod, this function returns 0 (without pushing any value on the stack).
 	pub extern "C" fn luaL_callmeta(l: LuaState, obj: c_int, name: LuaString) -> c_int;
 }
 
 dyn_symbols! {
-	/// Does the equivalent to t\[k\] = v, where t is the value at the given valid index and v is the value at the top of the stack.
-	/// This function pops the value from the stack.
+	/// Does the equivalent to t\[k\] = v, where t is the value at the given valid index and v is the value at the top of the stack.  
+	/// This function pops the value from the stack.  
 	/// As in Lua, this function may trigger the __newindex metamethod.
 	pub extern "C" fn lua_setfield(l: LuaState, idx: c_int, name: LuaString) -> ();
 
 	/// Pops a table from the stack and sets it as the new metatable for the value at the given acceptable index.
 	pub extern "C" fn lua_setmetatable(l: LuaState, idx: c_int) -> ();
 
-	/// Accepts any acceptable index, or 0, and sets the stack top to this index.
-	/// If the new top is larger than the old one, then the new elements are filled with nil.
+	/// Accepts any acceptable index, or 0, and sets the stack top to this index.  
+	/// If the new top is larger than the old one, then the new elements are filled with nil.  
 	/// If index is 0, then all stack elements are removed.
 	pub extern "C" fn lua_settop(l: LuaState, ind: c_int) -> ();
 
 	/// Pops a table from the stack and sets it as the new environment for the value at the given index.
 	/// # Returns
-	/// If the value at the given index is neither a function nor a thread nor a userdata, returns 0.
+	/// If the value at the given index is neither a function nor a thread nor a userdata, returns 0.  
 	/// Otherwise returns 1.
 	pub extern "C" fn lua_setfenv(l: LuaState, idx: c_int) -> c_int;
 
@@ -213,62 +205,62 @@ dyn_symbols! {
 	/// Same as lua_settable, but without calling any metamethods.
 	pub extern "C" fn lua_rawset(l: LuaState, idx: c_int) -> ();
 
-	/// Does the equivalent of t\[n\] = v, where t is the value at the given valid index and v is the value at the top of the stack.
+	/// Does the equivalent of t\[n\] = v, where t is the value at the given valid index and v is the value at the top of the stack.  
 	/// This function pops the value from the stack. The assignment is raw; that is, it does not invoke metamethods.
 	pub extern "C" fn lua_rawseti(l: LuaState, idx: c_int, n: c_int) -> ();
 }
 
 // Getters
 dyn_symbols! {
-	/// Pushes onto the stack the value t\[k\], where t is the value at the given valid index and k is the value at the top of the stack.
+	/// Pushes onto the stack the value t\[k\], where t is the value at the given valid index and k is the value at the top of the stack.  
 	/// This function pops the key from the stack (putting the resulting value in its place). As in Lua, this function may trigger a metamethod for the "index" event (see §2.8).
 	pub extern "C" fn lua_gettable(l: LuaState, idx: c_int) -> ();
 
 	/// This is the same as lua_gettable, but without calling any metamethods
 	pub extern "C" fn lua_rawget(l: LuaState, idx: c_int) -> ();
 
-	/// Pushes onto the stack the value t\[n\], where t is the value at the given valid index.
+	/// Pushes onto the stack the value t\[n\], where t is the value at the given valid index.  
 	/// The access is raw; that is, it does not invoke metamethods.
 	pub extern "C" fn lua_rawgeti(l: LuaState, idx: c_int, n: c_int) -> ();
 
 	/// Pushes onto the stack the environment table of the value at the given index.
 	pub extern "C" fn lua_getfenv(l: LuaState, idx: c_int) -> ();
 
-	/// Pushes onto the stack the metatable of the value at the given acceptable index.
+	/// Pushes onto the stack the metatable of the value at the given acceptable index.  
 	/// If the index is not valid, or if the value does not have a metatable, the function returns 0 and pushes nothing on the stack.
 	pub extern "C" fn lua_getmetatable(l: LuaState, idx: c_int) -> c_int;
 
-	/// Pushes onto the stack the value t\[k\], where t is the value at ``idx``.
-	/// As in Lua, this function may trigger a metamethod for the "index" event (see §2.8).
+	/// Pushes onto the stack the value t\[k\], where t is the value at ``idx``.  
+	/// As in Lua, this function may trigger a metamethod for the "index" event.
 	pub extern "C" fn lua_getfield(l: LuaState, idx: c_int, key: LuaString) -> ();
 }
 
 // Non-stack getters
 dyn_symbols! {
-	/// Returns the type of the value in the given acceptable index, or LUA_TNONE for a non-valid index (that is, an index to an "empty" stack position).
-	/// The types returned by lua_type are coded by the following constants:
+	/// Returns the type of the value in the given acceptable index, or [TNONE] for a non-valid index (that is, an index to an "empty" stack position).  
+	/// The types returned by lua_type are coded by the following constants:  
 	/// [TNIL], [TNUMBER], [TBOOLEAN], [TSTRING], [TTABLE], [TFUNCTION], [TUSERDATA], [TTHREAD], and [TLIGHTUSERDATA].
 	pub extern "C" fn lua_type(l: LuaState, idx: c_int) -> c_int;
 
-	/// Returns the name of the type ``typeid`` which must be one the values returned by [lua_type].
+	/// Returns the name of the type ``typeid`` which must be one the values returned by [lua_type].  
 	/// Use [luaL_typename] if you want to get it directly from a value in the stack.
 	pub extern "C" fn lua_typename(l: LuaState, typeid: c_int) -> LuaString; // To be used with the return value of lua_type
 
 	// Type conversion getters
 
-	/// Converts the Lua value at the given index to a C string.
-	/// If len is not 0, it also sets *len with the string length.
-	/// The Lua value must be a string or a number; otherwise, the function returns a nullptr.
-	/// If the value is a number, then lua_tolstring also changes the actual value in the stack to a string.
+	/// Converts the Lua value at the given index to a C string.  
+	/// If len is not 0, it also sets *len with the string length.  
+	/// The Lua value must be a string or a number; otherwise, the function returns a [None].  
+	/// If the value is a number, then lua_tolstring also changes the actual value in the stack to a string.  
 	/// (This change confuses lua_next when lua_tolstring is applied to keys during a table traversal.)
 	pub extern "C" fn lua_tolstring(l: LuaState, ind: c_int, size: SizeT) -> Option<LuaString>;
 
-	/// Converts the Lua value at the given acceptable index to a C boolean value (0 or 1).
-	/// Like all tests in Lua, lua_toboolean returns 1 for any Lua value different from false and nil; otherwise returning 0.
+	/// Converts the Lua value at the given acceptable index to a C boolean value (0 or 1).  
+	/// Like all tests in Lua, lua_toboolean returns 1 for any Lua value different from false and nil; otherwise returning 0.  
 	/// This also returns 0 when called with a non-valid index. (If you want to accept only actual boolean values, use [lua_isboolean] to test the value's type.)
 	pub extern "C" fn lua_toboolean(l: LuaState, idx: c_int) -> c_int;
 
-	/// Converts a value at the given acceptable index to a C function.
+	/// Converts a value at the given acceptable index to a C function.  
 	/// That value must be a C function; otherwise, returns None.
 	/// # Example
 	/// ```rust
@@ -282,29 +274,29 @@ dyn_symbols! {
 	/// ```
 	pub extern "C" fn lua_tocfunction(l: LuaState, idx: c_int) -> Option<LuaCFunction>;
 
-	/// Converts the Lua value at the given acceptable index to the signed integral type [LuaInteger].
-	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.
+	/// Converts the Lua value at the given acceptable index to the signed integral type [LuaInteger].  
+	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.  
 	/// If the number is not an integer, it is truncated in some non-specified way.
 	pub extern "C" fn lua_tointeger(l: LuaState, idx: c_int) -> LuaInteger;
 
-	/// Converts the Lua value at the given acceptable index to a [LuaNumber].
+	/// Converts the Lua value at the given acceptable index to a [LuaNumber].  
 	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.
 	pub extern "C" fn lua_tonumber(l: LuaState, idx: c_int) -> LuaNumber;
 
-	/// Converts the value at the given acceptable index to a generic C pointer (void*).
-	/// The value can be a userdata, a table, a thread, or a function; otherwise this returns None.
-	/// Different objects will give different pointers.
+	/// Converts the value at the given acceptable index to a generic C pointer *mut [c_void].  
+	/// The value can be a userdata, a table, a thread, or a function; otherwise this returns None.  
+	/// Different objects will give different pointers.  
 	/// There is no way to convert the pointer back to its original value.
 	pub extern "C" fn lua_topointer(l: LuaState, idx: c_int) -> Option<*mut c_void>;
 
-	/// Converts the value at the given acceptable index to a Lua thread (represented as lua_State*).
+	/// Converts the value at the given acceptable index to a Lua thread (represented as [LuaState]).  
 	/// This value must be a thread; otherwise, the function returns None.
 	pub extern "C" fn lua_tothread(l: LuaState, idx: c_int) -> Option<LuaState>;
 
 	/// Returns the value at the given index assuming it is a userdata.
 	/// # Returns
-	/// If the value at the given acceptable index is a full userdata, returns its block address.
-	/// If the value is a light userdata, returns its pointer.
+	/// If the value at the given acceptable index is a full userdata, returns its block address.  
+	/// If the value is a light userdata, returns its pointer.  
 	/// Otherwise, returns None.
 	pub extern "C" fn lua_touserdata(l: LuaState, idx: c_int) -> Option<*mut c_void>;
 }
@@ -334,10 +326,10 @@ dyn_symbols! {
 	/// * `n` - Number of upvalues to associate and pull from stack with the function
 	pub extern "C" fn lua_pushcclosure(l: LuaState, fnc: LuaCFunction, nargs: c_int) -> ();
 
-	/// Pushes a light userdata onto the stack.
-	/// Userdata represent C values in Lua.
-	/// A light userdata represents a pointer.
-	/// It is a value (like a number): you do not create it, it has no individual metatable, and it is not collected (as it was never created).
+	/// Pushes a light userdata onto the stack.  
+	/// Userdata represent C values in Lua.  
+	/// A light userdata represents a pointer.  
+	/// It is a value (like a number): you do not create it, it has no individual metatable, and it is not collected (as it was never created).  
 	/// A light userdata is equal to "any" light userdata with the same C address.
 	pub extern "C" fn lua_pushlightuserdata(l: LuaState, p: *mut c_void) -> ();
 
@@ -348,7 +340,9 @@ dyn_symbols! {
 	/// 1 if the thread is the main thread of the state.
 	pub extern "C" fn lua_pushthread(l: LuaState) -> c_int;
 
-	/// Pushes a formatted [LuaString] to the stack
+	/// Pushes a formatted [LuaString] to the stack  
+	/// Note this is not a direct function but instead a Lazy pointer to a function.  
+	/// This is because variadic functions are not yet supported in Rust, besides through external functions and pointers to them.
 	pub extern "C" fn lua_pushfstring(l: LuaState, fmt: LuaString, ...) -> LuaString;
 
 	/// Pushes a number with value ``n`` onto the stack.
@@ -380,30 +374,30 @@ dyn_symbols! {
 
 // Creation
 dyn_symbols! {
-	/// Creates a new Lua state.
+	/// Creates a new Lua state.  
 	/// This calls [lua_newstate] with an allocator based on the standard C realloc function and then sets a panic function (see lua_atpanic) that prints an error message to the standard error output in case of fatal errors.
 	/// # Returns
 	/// The newly created [LuaState], or None if the allocation failed (due to memory).
 	pub extern "C" fn luaL_newstate() -> Option<LuaState>;
 
-	/// Creates a new, independent state.
-	/// Note you might be looking for [luaL_newstate], which has no parameters
-	/// Returns None if cannot create the state (due to lack of memory).
-	/// The argument f is the allocator function;
-	/// Lua does all memory allocation for this state through this function.
+	/// Creates a new, independent state.  
+	/// Note you might be looking for [luaL_newstate], which has no parameters  
+	/// Returns None if cannot create the state (due to lack of memory).  
+	/// The argument f is the allocator function;  
+	/// Lua does all memory allocation for this state through this function.  
 	/// The second argument, ud, is an opaque pointer that Lua simply passes to the allocator in every call.
 	pub extern "C" fn lua_newstate(f: LuaAlloc, ud: *mut c_void) -> Option<LuaState>;
 
-	/// Creates a new empty table and pushes it onto the stack.
-	/// The new table has space pre-allocated for ``narr`` array elements and ``nrec`` non-array elements.
-	/// This pre-allocation is useful when you know exactly how many elements the table will have.
+	/// Creates a new empty table and pushes it onto the stack.  
+	/// The new table has space pre-allocated for ``narr`` array elements and ``nrec`` non-array elements.  
+	/// This pre-allocation is useful when you know exactly how many elements the table will have.  
 	/// Otherwise you can use the function [lua_newtable].
 	pub extern "C" fn lua_createtable(l: LuaState, narr: c_int, nrec: c_int) -> ();
 }
 
 // Destruction
 dyn_symbols! {
-	/// Destroys the given lua state.
+	/// Destroys the given lua state.  
 	/// You *probably* don't want to do this, unless you just want to self destruct the server / your client.
 	pub extern "C" fn lua_close(l: LuaState) -> ();
 }
@@ -422,7 +416,7 @@ dyn_symbols! {
 
 // Coroutines
 dyn_symbols! {
-	/// Yields a coroutine.
+	/// Yields a coroutine.  
 	/// This function should only be called as the return expression of a C function, as follows:
 	/// ```ignore
 	/// return lua_yield (L, nresults);
@@ -461,9 +455,11 @@ dyn_symbols! {
 	/// where location is produced by luaL_where, func is the name of the current function, and rt is the type name of the actual argument.
 	pub extern "C" fn luaL_typerror(l: LuaState, narg: c_int, typename: LuaString) -> !;
 
-	/// Raises an error.
-	/// The error message format is given by fmt plus any extra arguments, following the same rules of [lua_pushfstring].
-	/// It also adds at the beginning of the message the file name and the line number where the error occurred, if this information is available.
+	/// Raises an error.  
+	/// The error message format is given by fmt plus any extra arguments, following the same rules of [lua_pushfstring].  
+	/// It also adds at the beginning of the message the file name and the line number where the error occurred, if this information is available.  
+	/// Note this is not a direct function but instead a Lazy pointer to a function.  
+	/// This is because variadic functions are not yet supported in Rust, besides through external functions and pointers to them.
 	pub extern "C" fn luaL_error(l: LuaState, fmt: LuaString, ...) -> !;
 
 	/// Raises an error with the following message, where func is retrieved from the call stack:
@@ -502,10 +498,10 @@ dyn_symbols! {
 	/// Opens all of the standard libraries for a lua state
 	pub extern "C" fn luaL_openlibs(l: LuaState) -> ();
 	/// Internally called by luaL_register, opens given list of LuaRegs with number of functions provided explicitly
-	pub extern "C" fn luaL_openlib(l: LuaState, libname: LuaString, l: *const LuaReg, nup: c_int) -> ();
+	pub extern "C" fn luaL_openlib(l: LuaState, libname: LuaString, reg: *const LuaReg, nup: c_int) -> ();
 
-	/// Registers a ``reg`` of functions onto the Lua State's _G\[libname\].
-	/// For example you could set libname to cstr!("math") to add functions onto the ``math`` table or create it if it does not exist.
+	/// Registers a ``reg`` of functions onto the LuaState's _G\[libname\].
+	/// For example you could set libname to [cstr]!("math") to add functions onto the ``math`` table or create it if it does not exist.  
 	///
 	/// When called with libname as std::ptr::null(), it simply registers all functions in the list ``lib`` into the table on the top of the stack.
 	/// # Example
@@ -529,31 +525,31 @@ dyn_symbols! {
 }
 
 dyn_symbols! {
-	/// Creates and returns a reference, in the table at index t, for the object at the top of the stack (and pops the object).
-	/// A reference is a unique integer key.
-	/// As long as you do not manually add integer keys into table t, luaL_ref ensures the uniqueness of the key it returns.
-	/// You can retrieve an object referred by reference r by calling lua_rawgeti(L, t, r).
+	/// Creates and returns a reference, in the table at index t, for the object at the top of the stack (and pops the object).  
+	/// A reference is a unique integer key.  
+	/// As long as you do not manually add integer keys into table t, [luaL_ref] ensures the uniqueness of the key it returns.  
+	/// You can retrieve an object referred by reference r by calling [lua_rawgeti](L, t, r).  
 	/// Function luaL_unref frees a reference and its associated object.
 	///
-	/// If the object at the top of the stack is nil, luaL_ref returns the constant LUA_REFNIL.
-	/// The constant LUA_NOREF is guaranteed to be different from any reference returned by luaL_ref.
+	/// If the object at the top of the stack is nil, luaL_ref returns the constant [REFNIL].  
+	/// The constant [NOREF] is guaranteed to be different from any reference returned by this.
 	pub extern "C" fn luaL_ref(l: LuaState, t: c_int) -> c_int;
 
-	/// Releases reference ref from the table at index t (see luaL_ref).
-	/// The entry is removed from the table, so that the referred object can be collected.
-	/// The reference ref is also freed to be used again.
-	/// If ref is LUA_NOREF or LUA_REFNIL, this does nothing.
+	/// Releases reference ref from the table at index t (see [luaL_ref]).  
+	/// The entry is removed from the table, so that the referred object can be collected.  
+	/// The reference ref is also freed to be used again.  
+	/// If ref is [NOREF] or [REFNIL], this does nothing.
 	pub extern "C" fn luaL_unref(l: LuaState, t: c_int, r: c_int) -> ();
 }
 
 // Metatables
 dyn_symbols! {
-	/// If the registry already has the key tname, returns 0. Otherwise, creates a new table to be used as a metatable for userdata, adds it to the registry with key tname, and returns 1.
+	/// If the registry already has the key tname, returns 0. Otherwise, creates a new table to be used as a metatable for userdata, adds it to the registry with key tname, and returns 1.  
 	/// In both cases pushes onto the stack the final value associated with ``tname`` in the registry.
 	pub extern "C" fn luaL_newmetatable(l: LuaState, tname: LuaString) -> c_int;
 
-	/// Creates a metatable with type and typeid
-	/// Same as luaL_newmetatable, but also sets the MetaName and MetaID fields of the metatable
+	/// Creates a metatable with type and typeid  
+	/// Same as [luaL_newmetatable], but also sets the MetaName and MetaID fields of the metatable
 	/// # Parameters
 	/// * `l` - LuaState
 	/// * `tname` - TypeName to be added to the metatable
@@ -567,39 +563,39 @@ dyn_symbols! {
 
 // Optional
 dyn_symbols! {
-	/// If the function argument ``narg`` is a number, returns this number cast to a [LuaInteger].
+	/// If the function argument ``narg`` is a number, returns this number cast to a [LuaInteger].  
 	/// If this argument is absent or is nil, returns d. Otherwise, raises an error.
 	pub extern "C" fn luaL_optinteger(l: LuaState, narg: c_int, d: LuaInteger) -> c_int;
 
-	/// If the function argument narg is a string, returns this string.
+	/// If the function argument narg is a string, returns this string.  
 	/// If this argument is absent or is nil, returns d. Otherwise, raises an error.
 	///
 	/// If ``sz`` is not 0, fills the position *``sz`` with the results's length.
 	pub extern "C" fn luaL_optlstring(l: LuaState, arg: c_int, d: LuaString, sz: SizeT)
 		-> LuaString;
 
-	/// If the function argument ``arg`` is a number, returns this number.
+	/// If the function argument ``arg`` is a number, returns this number.  
 	/// If this argument is absent or is nil, returns ``d``. Otherwise, raises an error.
 	pub extern "C" fn luaL_optnumber(l: LuaState, arg: c_int, d: LuaNumber) -> LuaNumber;
 }
 
 dyn_symbols! {
 	// x / ref functions
-	/// Converts the Lua value at the given index to the signed integral type lua_Integer.
-	/// The Lua value must be an integer, or a number or string convertible to an integer; otherwise, this returns 0.
-	/// If ``isnum`` is not None, its referent is assigned a boolean value that indicates whether the operation succeeded.
+	/// Converts the Lua value at the given index to the signed integral type [LuaInteger].  
+	/// The Lua value must be an integer, or a number or string convertible to an integer; otherwise, this returns 0.  
+	/// If ``isnum`` is not [None], its referent is assigned a boolean value that indicates whether the operation succeeded.
 	pub extern "C" fn lua_tointegerx(l: LuaState, index: c_int, isnum: Option<*mut c_int>) -> LuaInteger;
 
 
-	/// Converts the Lua value at the given index to a LuaNumber (f64).
-	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.
-	/// If ``isnum`` is not None, its referent is assigned a boolean value that indicates whether the operation succeeded.
+	/// Converts the Lua value at the given index to a [LuaNumber].  
+	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.  
+	/// If ``isnum`` is not None, its referent is assigned a boolean value that indicates whether the operation succeeded.  
 	pub extern "C" fn lua_tonumberx(l: LuaState, index: c_int, isnum: Option<*mut c_int>) -> LuaNumber;
 }
 
 dyn_symbols! {
-	/// Creates and pushes a traceback of the stack L1.
-	/// If msg is not None it is appended at the beginning of the traceback.
+	/// Creates and pushes a traceback of the stack L1.  
+	/// If msg is not None it is appended at the beginning of the traceback.  
 	/// The level parameter tells at which level to start the traceback.
 	pub extern "C" fn luaL_traceback(
 		l: LuaState,
@@ -608,12 +604,12 @@ dyn_symbols! {
 		level: c_int,
 	) -> ();
 
-	/// Pushes onto the stack a string identifying the current position of the control at level ``lvl`` in the call stack.
+	/// Pushes onto the stack a string identifying the current position of the control at level ``lvl`` in the call stack.  
 	/// Typically this string has the following format:
 	/// ```text
 	/// chunkname:currentline:
 	/// ```
-	/// Level 0 is the running function, level 1 is the function that called the running function, etc.
+	/// Level 0 is the running function, level 1 is the function that called the running function, etc.  
 	/// This function is used to build a prefix for error messages.
 	pub extern "C" fn luaL_where(l: LuaState, lvl: c_int) -> ();
 
@@ -632,7 +628,7 @@ dyn_symbols! {
 		szhint: c_int,
 	) -> LuaString;
 
-	/// Pops a key from the stack, and pushes a key-value pair from the table at the given index (the "next" pair after the given key).
+	/// Pops a key from the stack, and pushes a key-value pair from the table at the given index (the "next" pair after the given key).  
 	/// If there are no more elements in the table, then lua_next returns 0 (and pushes nothing).
 	///
 	/// # Safety
@@ -660,35 +656,35 @@ dyn_symbols! {
 	/// Replaces object at index (idx) with the object at the top of the stack (-1) and pops the stack.
 	pub extern "C" fn lua_replace(l: LuaState, idx: c_int) -> ();
 
-	/// Returns 1 if the value at acceptable index index1 is smaller than the value at acceptable index index2,
+	/// Returns 1 if the value at acceptable index index1 is smaller than the value at acceptable index index2,  
 	/// following the semantics of the Lua < operator (that is, may call metamethods).
 	///
 	/// Otherwise returns 0. Also returns 0 if any of the indices is non valid.
 	pub extern "C" fn lua_lessthan(l: LuaState, idx1: c_int, idx2: c_int) -> c_int;
 
-	/// Ensures that there are at least extra free stack slots in the stack.
-	/// It returns C 'false' if it cannot grow the stack to that size.
+	/// Ensures that there are at least extra free stack slots in the stack.  
+	/// It returns C 'false' if it cannot grow the stack to that size.  
 	/// This function never shrinks the stack; if the stack is already larger than the new size, it is left unchanged.
 	pub extern "C" fn lua_checkstack(l: LuaState, extra: c_int) -> c_int;
 
-	/// Sets a new panic function and returns the old one.
-	/// If an error happens outside any protected environment, Lua calls a panic function and then calls exit(EXIT_FAILURE), thus exiting the host application.
-	/// Your panic function can avoid this exit by never returning (e.g., doing a long jump).
+	/// Sets a new panic function and returns the old one.  
+	/// If an error happens outside any protected environment, Lua calls a panic function and then calls exit(EXIT_FAILURE), thus exiting the host application.  
+	/// Your panic function can avoid this exit by never returning (e.g., doing a long jump).  
 	/// The panic function can access the error message at the top of the stack.
 	/// # Returns
 	/// The old panic function.
 	pub extern "C" fn lua_atpanic(l: LuaState, panicf: LuaCFunction) -> LuaCFunction;
 
-	/// Returns the index of the top element in the stack.
+	/// Returns the index of the top element in the stack.  
 	/// Because indices start at 1, this result is equal to the number of elements in the stack (and so 0 means an empty stack).
 	pub extern "C" fn lua_gettop(l: LuaState) -> c_int;
 
-	/// Removes the element at the given valid index, shifting down the elements above this index to fill the gap.
-	/// Cannot be called with a pseudo-index, because a pseudo-index is not an actual stack position.
+	/// Removes the element at the given valid index, shifting down the elements above this index to fill the gap.  
+	/// Cannot be called with a pseudo-index, because a pseudo-index is not an actual stack position.  
 	/// (Example of pseudoindices are LUA_GLOBALSINDEX and globals::REGISTRYINDEX)
 	pub extern "C" fn lua_remove(l: LuaState, index: c_int) -> ();
 
-	/// Controls lua's garbage collector
+	/// Controls lua's garbage collector  
 	/// Performs different tasks depending on what you provide to the `what` parameter.
 	/// # Parameters
 	/// * `l` - LuaState
@@ -704,30 +700,30 @@ dyn_symbols! {
 	/// * `data` - c_int
 	pub extern "C" fn lua_gc(l: LuaState, what: c_int, data: c_int) -> c_int;
 
-	/// Moves the top element into the given valid index, shifting up the elements above this index to open space.
+	/// Moves the top element into the given valid index, shifting up the elements above this index to open space.  
 	/// Cannot be called with a pseudo-index, because a pseudo-index is not an actual stack position.
 	pub extern "C" fn lua_insert(l: LuaState, idx: c_int) -> ();
 
 
-	/// Creates a new thread, pushes it on the stack, and returns a pointer to a lua_State that represents this new thread.
-	/// The new state returned by this function shares with the original state all global objects (such as tables), but has an independent execution stack.
+	/// Creates a new thread, pushes it on the stack, and returns a pointer to a lua_State that represents this new thread.  
+	/// The new state returned by this function shares with the original state all global objects (such as tables), but has an independent execution stack.  
 	/// There is no explicit function to close or to destroy a thread. Threads are subject to garbage collection, like any Lua object.
 	pub extern "C" fn lua_newthread(l: LuaState) -> LuaState;
 
 	/// This function allocates a new block of memory with the given size, pushes onto the stack a new full userdata with the block address, and returns this address.
 	///
-	/// Userdata represent C values in Lua.
-	/// A full userdata represents a block of memory.
-	/// It is an object (like a table): you must create it, it can have its own metatable, and you can detect when it is being collected.
+	/// Userdata represent C values in Lua.  
+	/// A full userdata represents a block of memory.  
+	/// It is an object (like a table): you must create it, it can have its own metatable, and you can detect when it is being collected.  
 	/// A full userdata is only equal to itself (under raw equality).
 	///
-	/// When Lua collects a full userdata with a gc metamethod, Lua calls the metamethod and marks the userdata as finalized.
+	/// When Lua collects a full userdata with a gc metamethod, Lua calls the metamethod and marks the userdata as finalized.  
 	/// When this userdata is collected again then Lua frees its corresponding memory.
 	pub extern "C" fn lua_newuserdata(l: LuaState, size: SizeT) -> *mut Userdata;
 
 	/// Returns information about a specific function or function invocation.
 	///
-	/// To get information about a function you push it onto the stack and start the what string with the character '>'.
+	/// To get information about a function you push it onto the stack and start the what string with the character '>'.  
 	/// (In that case, lua_getinfo pops the function in the top of the stack.)
 	///
 	/// # Examples
@@ -750,10 +746,10 @@ dyn_symbols! {
 		ar: *mut LuaDebug,
 	) -> c_int;
 
-	/// Returns the "length" of the value at the given acceptable index.
-	/// For strings, this is the string length;
-	/// For tables, this is the result of the length operator ('#');
-	/// For userdata, this is the size of the block of memory allocated for the userdata;
+	/// Returns the "length" of the value at the given acceptable index.  
+	/// For strings, this is the string length;  
+	/// For tables, this is the result of the length operator ('#');  
+	/// For userdata, this is the size of the block of memory allocated for the userdata;  
 	/// For other values, it is 0.
 	pub extern "C" fn lua_objlen(l: LuaState, idx: c_int) -> SizeT;
 }
@@ -783,9 +779,9 @@ dyn_symbols! {
 	/// A hook is disabled by setting ``mask`` to zero.
 	pub extern "C" fn lua_sethook(l: LuaState, func: LuaHook, mask: c_int, count: c_int) -> c_int;
 
-	/// Gets information about a local variable of a given activation record.
-	/// The parameter ar must be a valid activation record that was filled by a previous call to lua_getstack or given as argument to a hook (see lua_Hook).
-	/// The index n selects which local variable to inspect (1 is the first parameter or active local variable, and so on, until the last active local variable).
+	/// Gets information about a local variable of a given activation record.  
+	/// The parameter ar must be a valid activation record that was filled by a previous call to lua_getstack or given as argument to a hook (see lua_Hook).  
+	/// The index n selects which local variable to inspect (1 is the first parameter or active local variable, and so on, until the last active local variable).  
 	/// lua_getlocal pushes the variable's value onto the stack and returns its name.
 	/// # Returns
 	/// Returns NULL (and pushes nothing) when the index is greater than the number of active local variables.
@@ -795,7 +791,7 @@ dyn_symbols! {
 	/// This function fills in the priv part of the LuaDebug structure with information about the function that is running at the given level.
 	pub extern "C" fn lua_getstack(l: LuaState, level: c_int, ar: *mut LuaDebug) -> c_int;
 
-	/// Gets information about a closure's upvalue. This is basically debug.getlocal.
+	/// Gets information about a closure's upvalue. This is basically debug.getlocal.  
 	/// (For Lua functions, upvalues are the external local variables that the function uses, and that are consequently included in its closure.)
 	/// # Parameters
 	/// * `idx` - Index of the upvalue to push the value of onto the stack and return the name of (like debug.getlocal)
@@ -804,34 +800,34 @@ dyn_symbols! {
 	/// Upvalues have no particular order, as they are active through the whole function.
 	/// So, they are numbered in an arbitrary order.
 	/// # Returns
-	/// The name of the upvalue at given index `idx`, or NULL (and pushes nothing) if the index is greater than the number of upvalues.
+	/// The name of the upvalue at given index `idx`, or NULL (and pushes nothing) if the index is greater than the number of upvalues.  
 	/// For C functions (functions not created in lua), this returns an empty string for the name of all upvalues
 	pub extern "C" fn lua_getupvalue(l: LuaState, fidx: c_int, idx: c_int) -> LuaString;
 
 	/// Sets the value of a closure's upvalue. Parameters funcindex and n are as in lua_getupvalue (see lua_getupvalue). It assigns the value at the top of the stack to the upvalue and returns its name. It also pops the value from the stack.
 	pub extern "C" fn lua_setupvalue(l: LuaState, fidx: c_int, idx: c_int) -> LuaString;
 
-	/// Sets the value of a local variable of a given activation record.
-	/// Parameters ar and n are as in lua_getlocal (see lua_getlocal).
-	/// lua_setlocal assigns the value at the top of the stack to the variable and returns its name.
+	/// Sets the value of a local variable of a given activation record.  
+	/// Parameters ar and n are as in [lua_getlocal].  
+	/// lua_setlocal assigns the value at the top of the stack to the variable and returns its name.  
 	/// It also pops the value from the stack.
 	pub extern "C" fn lua_setlocal(l: LuaState, ar: *mut LuaDebug, n: c_int) -> LuaString;
 }
 
 dyn_symbols! {
-	/// Creates a copy of string 's' by replacing any occurrence of the string 'p' with the string 'r'
+	/// Creates a copy of string 's' by replacing any occurrence of the string 'p' with the string 'r'  
 	/// Pushes the resulting string on the stack and returns it
 	pub extern "C" fn luaL_gsub(s: LuaString, pattern: LuaString, replace: LuaString) -> LuaString;
 
-	/// Exchange values between different threads of the same global state.
+	/// Exchange values between different threads of the same global state.  
 	/// This function pops `n` values from the stack `from`, and pushes them onto the stack `to`.
 	pub extern "C" fn lua_xmove(from: LuaState, to: LuaState, n: c_int) -> ();
 }
 
 dyn_symbols! {
-	/// Returns an unique identifier for the upvalue numbered n from the closure at index funcindex.
-	/// Parameters funcindex and n are as in the lua_getupvalue (see lua_getupvalue) (but n cannot be greater than the number of upvalues).
-	/// These unique identifiers allow a program to check whether different closures share upvalues.
+	/// Returns an unique identifier for the upvalue numbered n from the closure at index funcindex.  
+	/// Parameters funcindex and n are as in the [lua_getupvalue] (but n cannot be greater than the number of upvalues).  
+	/// These unique identifiers allow a program to check whether different closures share upvalues.  
 	/// Lua closures that share an upvalue (that is, that access a same external local variable) will return identical ids for those upvalue indices.
 	pub extern "C" fn lua_upvalueid(l: LuaState, fidx: c_int, n: c_int) -> *mut c_void;
 
@@ -845,7 +841,7 @@ dyn_symbols! {
 	/// This function does not allocate any space; the buffer must be declared as a variable.
 	pub extern "C" fn luaL_buffinit(l: LuaState, b: *mut LuaBuffer) -> ();
 
-	/// Returns an address to a space of size $crate::lua::BUFFERSIZE where you can copy a string to be added to buffer [LuaBuffer] `b`.
+	/// Returns an address to a space of size [$crate::lua::BUFFERSIZE] where you can copy a string to be added to buffer [LuaBuffer] `b`.  
 	/// After copying the string into this space you must call luaL_addsize with the size of the string to actually add it to the buffer.
 	pub extern "C" fn luaL_prepbuffer(b: *mut LuaBuffer) -> *mut c_char;
 
@@ -853,11 +849,11 @@ dyn_symbols! {
 	/// The string may not contain embedded zeros.
 	pub extern "C" fn luaL_addstring(b: *mut LuaBuffer, s: LuaString) -> ();
 
-	/// Adds the string pointed to by `s` with length `l` to the [LuaBuffer] `b`.
+	/// Adds the string pointed to by `s` with length `l` to the [LuaBuffer] `b`.  
 	/// The string may contain embedded zeros.
 	pub extern "C" fn luaL_addlstring(b: *mut LuaBuffer, s: LuaString, l: SizeT) -> ();
 
-	/// Adds the value at the top of the stack to the buffer [LuaBuffer] `b`. Pops the value.
+	/// Adds the value at the top of the stack to the buffer [LuaBuffer] `b`. Pops the value.  
 	/// This is the only function on string buffers that can (and must) be called with an extra element on the stack, which is the value to be added to the buffer.
 	pub extern "C" fn luaL_addvalue(b: *mut LuaBuffer) -> ();
 
@@ -866,7 +862,7 @@ dyn_symbols! {
 }
 
 dyn_symbols! {
-	/// Returns the memory-allocation function of a given state.
+	/// Returns the memory-allocation function of a given state.  
 	/// If ud is not NULL, Lua stores in *ud the opaque pointer passed to lua_newstate.
 	pub extern "C" fn lua_getallocf(l: LuaState, ud: *mut *mut c_void) -> LuaAlloc;
 
@@ -876,7 +872,7 @@ dyn_symbols! {
 
 // Misc
 dyn_symbols! {
-	/// Dumps a function as a binary chunk.
+	/// Dumps a function as a binary chunk.  
 	/// Receives a Lua function on the top of the stack and produces a binary chunk that, if loaded again, results in a function equivalent to the one dumped. As it produces parts of the chunk, lua_dump calls function writer (see lua_Writer) with the given data to write them.
 	pub extern "C" fn lua_dump(l: LuaState, writer: LuaWriter, data: *mut c_void) -> c_int;
 
@@ -924,7 +920,7 @@ lua_macros! {
 		lua_pushcclosure(l, fnc, 0);
 	};
 
-	/// Equivalent to lua_tolstring with len equal to 0
+	/// Equivalent to lua_tolstring with len equal to 0  
 	/// This may return None if the value at ``idx`` is not a string or a number, use [luaL_optstring] instead if you do not desire an Option<> or unwrap when you are absolutely sure of the type.
 	pub fn lua_tostring(l: LuaState, idx: c_int) -> Option<LuaString> {
 		lua_tolstring(l, idx, 0)
@@ -975,15 +971,15 @@ lua_macros! {
 		lua_type(l, n) <= 0
 	};
 
-	/// Loads and pcalls a string of lua code
-	/// Returns if the code was successfully executed
+	/// Loads and pcalls a string of lua code  
+	/// Returns if the code was successfully executed  
 	/// Error will be left on the stack if the code failed to execute
 	pub fn luaL_dostring(l: LuaState, str: LuaString) -> bool {
 		luaL_loadstring(l, str) == 0 || lua_pcall(l, 0, lua::MULTRET, 0) == 0
 	};
 
-	/// Loads and pcalls a file's lua code
-	/// Returns if the code was successfully executed
+	/// Loads and pcalls a file's lua code  
+	/// Returns if the code was successfully executed  
 	/// Error will be left on the stack if the code failed to execute
 	pub fn luaL_dofile(l: LuaState, filename: LuaString) -> bool {
 		luaL_loadfile(l, Some(filename)) == 0 || lua_pcall(l, 0, lua::MULTRET, 0) == 0
@@ -1011,7 +1007,7 @@ lua_macros! {
 		luaL_checklstring(l, i, 0)
 	};
 
-	/// Like lua_tostring or luaL_checkstring, but instead of returning an invalid string / erroring,
+	/// Like lua_tostring or luaL_checkstring, but instead of returning an invalid string / erroring,  
 	/// It returns the given `default` string.
 	pub fn luaL_optstring(l: LuaState, i: c_int, default: LuaString) -> LuaString {
 		luaL_optlstring(l, i, default, 0)
@@ -1023,7 +1019,7 @@ lua_macros! {
 		lua_setglobal(l, name);
 	};
 
-	/// Creates a new empty table and pushes it onto the stack.
+	/// Creates a new empty table and pushes it onto the stack.  
 	/// It is equivalent to ``lua_createtable(l, 0, 0)``.
 	pub fn lua_newtable(l: LuaState) -> () {
 		lua_createtable(l, 0, 0);
@@ -1032,14 +1028,19 @@ lua_macros! {
 
 // Userdata helpers
 lua_macros! {
-	pub fn luaL_checkvector(l: LuaState, narg: c_int) -> Vector {
-		unsafe { *( (*luaL_checkudata(l, narg, cstr!("Vector"))).data as *mut _) }
+	#[cfg(feature = "userdata")]
+	/// Returns a [Vector] on the stack at index ``idx``, or if there is no such value, throws a lua argument error.
+	pub fn luaL_checkvector(l: LuaState, idx: c_int) -> Vector {
+		unsafe { *( (*luaL_checkudata(l, idx, cstr!("Vector"))).data as *mut _) }
 	};
 
-	pub fn luaL_checkangle(l: LuaState, narg: c_int) -> crate::userdata::Angle {
-		unsafe { *( (*luaL_checkudata(l, narg, cstr!("Angle"))).data as *mut _) }
+	#[cfg(feature = "userdata")]
+	/// Returns an [Angle] on the stack at index ``idx``, or if there is no such value, throws a lua argument error.
+	pub fn luaL_checkangle(l: LuaState, idx: c_int) -> crate::userdata::Angle {
+		unsafe { *( (*luaL_checkudata(l, idx, cstr!("Angle"))).data as *mut _) }
 	};
 }
+
 /// Pushes a vector onto the stack
 /// # Example
 /// Creates a LuaCFunction that will take three number arguments and return a glua Vector type.
@@ -1055,6 +1056,7 @@ lua_macros! {
 ///     1
 /// }
 /// ```
+#[cfg(feature = "userdata")]
 pub fn lua_pushvector(l: LuaState, v: Vector) {
 	let ptr = lua_newuserdata(l, std::mem::size_of::<Userdata>());
 
@@ -1074,6 +1076,7 @@ pub fn lua_pushvector(l: LuaState, v: Vector) {
 }
 
 /// Pushes an angle onto the stack.
+#[cfg(feature = "userdata")]
 pub fn lua_pushangle(l: LuaState, v: Angle) {
 	let ptr = lua_newuserdata(l, std::mem::size_of::<Userdata>());
 
@@ -1091,8 +1094,8 @@ pub fn lua_pushangle(l: LuaState, v: Angle) {
 
 #[inline(always)]
 #[allow(non_snake_case)]
-/// Tries to see if the given value at index ``arg`` is nil or none, if so, returns ``default`` value.
-/// Otherwise, runs ``func``, passing the lua state and arg indent and returns the value of that
+/// Tries to see if the given value at index ``arg`` is nil or none, if so, returns ``default`` value.  
+/// Otherwise, runs ``func``, passing the lua state and arg indent and returns the value of that  
 /// # Returns
 /// Type ``T`` either from the function or default value.
 pub fn luaL_opt<T, F: Fn(LuaState, c_int) -> T>(l: LuaState, arg: c_int, default: T, func: F) -> T {
@@ -1103,7 +1106,7 @@ pub fn luaL_opt<T, F: Fn(LuaState, c_int) -> T>(l: LuaState, arg: c_int, default
 	}
 }
 
-/// This function works like luaL_checkudata, except that, when the test fails, it returns None instead of throwing an error.
+/// This function works like [luaL_checkudata], except that, when the test fails, it returns None instead of throwing an error.  
 /// Adapted from Lua 5.3, note this does not actually exist in gluajit
 #[allow(non_snake_case)]
 pub fn luaL_testudata(l: LuaState, arg: c_int, tname: LuaString) -> Option<*mut super::Userdata> {
@@ -1119,7 +1122,18 @@ pub fn luaL_testudata(l: LuaState, arg: c_int, tname: LuaString) -> Option<*mut 
 
 #[inline(always)]
 #[allow(non_snake_case)]
-pub fn lua_tovector<'a>(l: LuaState, i: c_int) -> Option<&'a mut Vector> {
+#[cfg(feature = "userdata")]
+/// Returns a [Vector] from the stack at index ``i``.
+pub fn lua_tovector<'a>(l: LuaState, i: c_int) -> Option<Vector> {
 	luaL_testudata(l, i, cstr!("Vector"))
-		.map(|x: *mut Userdata| unsafe { &mut *(x as *mut Vector) })
+		.map(|x: *mut Userdata| unsafe { *(x as *mut Vector) })
+}
+
+#[inline(always)]
+#[allow(non_snake_case)]
+#[cfg(feature = "userdata")]
+/// Returns an [Angle] from the stack at index ``i``.
+pub fn lua_toangle(l: LuaState, i: c_int) -> Option<Angle> {
+	luaL_testudata(l, i, cstr!("Angle"))
+		.map(|x: *mut Userdata| unsafe { *(x as *mut Angle) })
 }

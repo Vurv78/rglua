@@ -1,8 +1,8 @@
 use super::prelude::*;
 
-iface! {
+interfaces! {
 	#[version("VGUI_Panel009")]
-	#[file("vgui2.dll")]
+	#[file("vgui2")]
 	pub abstract struct IPanel {};
 }
 

@@ -10,9 +10,9 @@ pub struct ConCommandBase {
 	pub flags: c_int,               // 20
 }
 
-iface! {
+interfaces! {
 	#[version("VEngineCvar007")]
-	#[file("vstdlib.dll")]
+	#[file("vstdlib")]
 	pub abstract struct ICVar {};
 }
 

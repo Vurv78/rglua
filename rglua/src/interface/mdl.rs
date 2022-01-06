@@ -1,9 +1,9 @@
 use super::common::StudioHdr;
 use super::prelude::*;
 
-iface! {
+interfaces! {
 	#[version("MDLCache004")]
-	#[file("datacache.dll")]
+	#[file("datacache")]
 	pub abstract struct IMdlCache {};
 
 	#[version("")]

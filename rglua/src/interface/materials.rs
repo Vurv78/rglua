@@ -1,6 +1,6 @@
 use super::prelude::*;
 
-iface! {
+interfaces! {
 	#[version("")]
 	#[file("")]
 	/// You do not get this through creating an interface, it is instead exported by other interface functions.

@@ -1,6 +1,6 @@
-pub(crate) use super::prelude::{self, iface, VTable};
+pub(crate) use super::prelude::{self, interfaces, VTable};
 
-iface! {
+interfaces! {
 	#[version("")]
 	#[file("")]
 	/// <https://github.com/danielga/garrysmod_common/blob/9981d4aaee15452a9b0f53436c1aa807f81f3fd6/include/GarrysMod/Lua/LuaObject.h#L24>

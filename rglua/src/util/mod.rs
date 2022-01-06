@@ -132,6 +132,58 @@ macro_rules! reg {
 	};
 }
 
+// get_from_interface using literal c strings.
+#[cfg(feature = "interfaces")]
+fn get_from_interface(
+	iface: &str,
+	factory: crate::interface::CreateInterfaceFn,
+) -> Result<*mut (), crate::interface::InterfaceError> {
+	let mut status = 0;
+
+	let iface = try_cstr!(iface)?;
+	let result = factory(iface.as_ptr(), &mut status);
+
+	if status == 0 && !result.is_null() {
+		Ok(result as *mut ())
+	} else {
+		Err(crate::interface::InterfaceError::FactoryNotFound)
+	}
+}
+
+/// Quickly calls [get_interface_handle] and [get_from_interface] for you in one macro call. Errors are combined into one.
+/// # Examples
+/// ```rust
+/// use rglua::prelude::*;
+/// use rglua::interface::EngineClient;
+/// #[gmod_open]
+/// fn entry(l: LuaState) -> i32 {
+///     let factory: *mut EngineClient = iface!("engine", "VEngineClient015").expect("Couldn't get VEngineClient");
+///     let instance = unsafe { factory.as_ref().unwrap() };
+///     println!("Am I in game? {}", instance.IsInGame());
+///     0
+/// }
+/// ```
+#[macro_export]
+macro_rules! iface {
+	( $name:literal, $iface:literal ) => {{
+		if let Ok(handle) = unsafe { $crate::interface::get_interface_handle($name) } {
+			let mut status = 0;
+
+			let iface = cstr!($iface);
+			let result = handle(iface, &mut status);
+
+			if status == 0 && !result.is_null() {
+				Some(result as *mut _)
+			} else {
+				None
+			}
+		} else {
+			None
+		}
+	}}
+	// Todo: Using expressions for name and iface. (Although you probably just want to use the functions at that point)
+}
+
 use crate::types::LuaState;
 /// Returns the current state of the lua stack without affecting it.
 /// Comes out in this format:

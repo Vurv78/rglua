@@ -5,11 +5,9 @@ pub mod interface;
 
 #[macro_use]
 pub mod lua;
-
 pub use lua::types;
 
 pub use rglua_macros::*;
-
 pub mod prelude;
 
 #[cfg(feature = "userdata")]

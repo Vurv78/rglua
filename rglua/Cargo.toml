@@ -1,7 +1,7 @@
 [package]
 name = "rglua"
 description = "Toolkit for garrysmod development with the source sdk and luajit api"
-version = "2.0.0-beta"
+version = "2.0.0"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
 keywords = ["glua", "garrysmod", "lua", "gmod"]
 categories = ["api-bindings", "external-ffi-bindings", "development-tools::ffi", "game-development", "accessibility"]
