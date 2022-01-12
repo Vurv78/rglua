@@ -60,7 +60,6 @@ macro_rules! lua_macros {
 // Loading functions
 dyn_symbols! {
 	/// Function used by [luaL_loadbuffer].
-	///
 	pub extern "C" fn luaL_loadbufferx(
 		l: LuaState,
 		code: LuaString,
@@ -249,11 +248,11 @@ dyn_symbols! {
 	// Type conversion getters
 
 	/// Converts the Lua value at the given index to a C string.  
-	/// If len is not 0, it also sets *len with the string length.  
+	/// If len is not None, it also sets *len with the string length.  
 	/// The Lua value must be a string or a number; otherwise, the function returns a [None].  
 	/// If the value is a number, then lua_tolstring also changes the actual value in the stack to a string.  
 	/// (This change confuses lua_next when lua_tolstring is applied to keys during a table traversal.)
-	pub extern "C" fn lua_tolstring(l: LuaState, ind: c_int, size: SizeT) -> Option<LuaString>;
+	pub extern "C" fn lua_tolstring(l: LuaState, ind: c_int, len: Option<*mut SizeT>) -> Option<LuaString>;
 
 	/// Converts the Lua value at the given acceptable index to a C boolean value (0 or 1).  
 	/// Like all tests in Lua, lua_toboolean returns 1 for any Lua value different from false and nil; otherwise returning 0.  
@@ -358,8 +357,8 @@ dyn_symbols! {
 	pub extern "C" fn luaL_checknumber(l: LuaState, narg: c_int) -> LuaNumber;
 
 	/// Checks whether the function argument ``narg`` is a string and returns this string.
-	/// If len is not 0 fills *len with the string's length.
-	pub extern "C" fn luaL_checklstring(l: LuaState, narg: c_int, len: SizeT) -> LuaString;
+	/// If len is not None fills *len with the string's length.
+	pub extern "C" fn luaL_checklstring(l: LuaState, narg: c_int, len: Option<*mut SizeT>) -> LuaString;
 
 	/// Checks whether the function has an argument of any type (including nil) at position narg.
 	pub extern "C" fn luaL_checkany(l: LuaState, narg: c_int) -> ();
@@ -568,15 +567,15 @@ dyn_symbols! {
 	pub extern "C" fn luaL_optinteger(l: LuaState, narg: c_int, d: LuaInteger) -> c_int;
 
 	/// If the function argument narg is a string, returns this string.  
-	/// If this argument is absent or is nil, returns d. Otherwise, raises an error.
+	/// If this argument is absent or is nil, returns ``default``. Otherwise, raises an error.
 	///
-	/// If ``sz`` is not 0, fills the position *``sz`` with the results's length.
-	pub extern "C" fn luaL_optlstring(l: LuaState, arg: c_int, d: LuaString, sz: SizeT)
+	/// If ``len`` is not None, fills the position *``len`` with the results's length.
+	pub extern "C" fn luaL_optlstring(l: LuaState, arg: c_int, default: LuaString, len: Option<*mut SizeT>)
 		-> LuaString;
 
 	/// If the function argument ``arg`` is a number, returns this number.  
-	/// If this argument is absent or is nil, returns ``d``. Otherwise, raises an error.
-	pub extern "C" fn luaL_optnumber(l: LuaState, arg: c_int, d: LuaNumber) -> LuaNumber;
+	/// If this argument is absent or is nil, returns ``default``. Otherwise, raises an error.
+	pub extern "C" fn luaL_optnumber(l: LuaState, arg: c_int, default: LuaNumber) -> LuaNumber;
 }
 
 dyn_symbols! {
@@ -920,10 +919,10 @@ lua_macros! {
 		lua_pushcclosure(l, fnc, 0);
 	};
 
-	/// Equivalent to lua_tolstring with len equal to 0  
-	/// This may return None if the value at ``idx`` is not a string or a number, use [luaL_optstring] instead if you do not desire an Option<> or unwrap when you are absolutely sure of the type.
+	/// Equivalent to ``lua_tolstring(l, idx, None)``  
+	/// This may return None if the value at ``idx`` is not a string or a number, use [luaL_optstring] instead if you do not desire an Option<>, or lua_checkstring for arguments.
 	pub fn lua_tostring(l: LuaState, idx: c_int) -> Option<LuaString> {
-		lua_tolstring(l, idx, 0)
+		lua_tolstring(l, idx, None)
 	};
 
 	/// Starts and resumes a coroutine in a given thread
@@ -1004,13 +1003,13 @@ lua_macros! {
 
 	/// Asserts that a string argument exists at index 'i'
 	pub fn luaL_checkstring(l: LuaState, i: c_int) -> LuaString {
-		luaL_checklstring(l, i, 0)
+		luaL_checklstring(l, i, None)
 	};
 
 	/// Like lua_tostring or luaL_checkstring, but instead of returning an invalid string / erroring,  
 	/// It returns the given `default` string.
 	pub fn luaL_optstring(l: LuaState, i: c_int, default: LuaString) -> LuaString {
-		luaL_optlstring(l, i, default, 0)
+		luaL_optlstring(l, i, default, None)
 	};
 
 	/// Sets the C function ``f`` as the value of global name ``name``.
