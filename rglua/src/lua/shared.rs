@@ -117,9 +117,9 @@ dyn_symbols! {
 
 	/// Loads a file as a Lua chunk.  
 	/// This function uses [lua_load] to load the chunk in the file named ``filename``.  
-	/// If filename is None, then it loads from the standard input.  
+	/// If filename is [std::ptr::null_mut()], then it loads from the standard input.  
 	/// The first line in the file is ignored if it starts with a # (shebang)
-	pub extern "C" fn luaL_loadfile(l: LuaState, filename: Option<LuaString>) -> c_int;
+	pub extern "C" fn luaL_loadfile(l: LuaState, filename: LuaString) -> c_int;
 
 	/// Same as how [lua_loadx] is to [lua_load].  
 	/// You should probably use [luaL_loadfile] instead.
@@ -249,10 +249,10 @@ dyn_symbols! {
 
 	/// Converts the Lua value at the given index to a C string.  
 	/// If len is not None, it also sets *len with the string length.  
-	/// The Lua value must be a string or a number; otherwise, the function returns a [None].  
+	/// The Lua value must be a string or a number; otherwise, the function returns a [std::ptr::null()].  
 	/// If the value is a number, then lua_tolstring also changes the actual value in the stack to a string.  
 	/// (This change confuses lua_next when lua_tolstring is applied to keys during a table traversal.)
-	pub extern "C" fn lua_tolstring(l: LuaState, ind: c_int, len: Option<*mut SizeT>) -> Option<LuaString>;
+	pub extern "C" fn lua_tolstring(l: LuaState, ind: c_int, len: *mut SizeT) -> LuaString;
 
 	/// Converts the Lua value at the given acceptable index to a C boolean value (0 or 1).  
 	/// Like all tests in Lua, lua_toboolean returns 1 for any Lua value different from false and nil; otherwise returning 0.  
@@ -267,11 +267,11 @@ dyn_symbols! {
 	/// #[gmod_open]
 	/// fn entry(l: LuaState) -> i32 {
 	/// 	lua_getglobal(l, cstr!("CurTime"));
-	/// 	let curtime = lua_tocfunction(l, -1).unwrap();
+	/// 	let curtime = lua_tocfunction(l, -1);
 	/// 	0
 	/// }
 	/// ```
-	pub extern "C" fn lua_tocfunction(l: LuaState, idx: c_int) -> Option<LuaCFunction>;
+	pub extern "C" fn lua_tocfunction(l: LuaState, idx: c_int) -> LuaCFunction;
 
 	/// Converts the Lua value at the given acceptable index to the signed integral type [LuaInteger].  
 	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.  
@@ -286,18 +286,18 @@ dyn_symbols! {
 	/// The value can be a userdata, a table, a thread, or a function; otherwise this returns None.  
 	/// Different objects will give different pointers.  
 	/// There is no way to convert the pointer back to its original value.
-	pub extern "C" fn lua_topointer(l: LuaState, idx: c_int) -> Option<*mut c_void>;
+	pub extern "C" fn lua_topointer(l: LuaState, idx: c_int) -> *mut c_void;
 
 	/// Converts the value at the given acceptable index to a Lua thread (represented as [LuaState]).  
 	/// This value must be a thread; otherwise, the function returns None.
-	pub extern "C" fn lua_tothread(l: LuaState, idx: c_int) -> Option<LuaState>;
+	pub extern "C" fn lua_tothread(l: LuaState, idx: c_int) -> LuaState;
 
 	/// Returns the value at the given index assuming it is a userdata.
 	/// # Returns
 	/// If the value at the given acceptable index is a full userdata, returns its block address.  
 	/// If the value is a light userdata, returns its pointer.  
-	/// Otherwise, returns None.
-	pub extern "C" fn lua_touserdata(l: LuaState, idx: c_int) -> Option<*mut c_void>;
+	/// Otherwise, returns [std::ptr::null_mut()].
+	pub extern "C" fn lua_touserdata(l: LuaState, idx: c_int) -> *mut c_void;
 }
 
 dyn_symbols! {
@@ -357,8 +357,8 @@ dyn_symbols! {
 	pub extern "C" fn luaL_checknumber(l: LuaState, narg: c_int) -> LuaNumber;
 
 	/// Checks whether the function argument ``narg`` is a string and returns this string.
-	/// If len is not None fills *len with the string's length.
-	pub extern "C" fn luaL_checklstring(l: LuaState, narg: c_int, len: Option<*mut SizeT>) -> LuaString;
+	/// If len is not [std::ptr::null_mut()] fills *len with the string's length.
+	pub extern "C" fn luaL_checklstring(l: LuaState, narg: c_int, len: *mut SizeT) -> LuaString;
 
 	/// Checks whether the function has an argument of any type (including nil) at position narg.
 	pub extern "C" fn luaL_checkany(l: LuaState, narg: c_int) -> ();
@@ -376,8 +376,8 @@ dyn_symbols! {
 	/// Creates a new Lua state.  
 	/// This calls [lua_newstate] with an allocator based on the standard C realloc function and then sets a panic function (see lua_atpanic) that prints an error message to the standard error output in case of fatal errors.
 	/// # Returns
-	/// The newly created [LuaState], or None if the allocation failed (due to memory).
-	pub extern "C" fn luaL_newstate() -> Option<LuaState>;
+	/// The newly created [LuaState], or [std::ptr::null_mut()] if the allocation failed (due to memory).
+	pub extern "C" fn luaL_newstate() -> LuaState;
 
 	/// Creates a new, independent state.  
 	/// Note you might be looking for [luaL_newstate], which has no parameters  
@@ -385,7 +385,7 @@ dyn_symbols! {
 	/// The argument f is the allocator function;  
 	/// Lua does all memory allocation for this state through this function.  
 	/// The second argument, ud, is an opaque pointer that Lua simply passes to the allocator in every call.
-	pub extern "C" fn lua_newstate(f: LuaAlloc, ud: *mut c_void) -> Option<LuaState>;
+	pub extern "C" fn lua_newstate(f: LuaAlloc, ud: *mut c_void) -> LuaState;
 
 	/// Creates a new empty table and pushes it onto the stack.  
 	/// The new table has space pre-allocated for ``narr`` array elements and ``nrec`` non-array elements.  
@@ -406,11 +406,11 @@ dyn_symbols! {
 	/// This is a C API extension to allow control of the VM from "C"
 	/// # Parameters
 	/// * `l` - Lua state
-	/// * `idx` - Stack index of the function to set the mode of. None to set the mode of the entirety of luajit.
+	/// * `idx` - Stack index of the function to set the mode of. `0` to set the mode of the entirety of luajit.
 	/// * `mode` - The mode to set, 'or'ed with a flag from [lua::jit]
 	/// # Returns
 	/// 1 for success, 0 for failure.
-	pub extern "C" fn luaJIT_setmode(l: LuaState, idx: Option<c_int>, jit_mode: c_int) -> c_int;
+	pub extern "C" fn luaJIT_setmode(l: LuaState, idx: c_int, jit_mode: c_int) -> c_int;
 }
 
 // Coroutines
@@ -569,8 +569,8 @@ dyn_symbols! {
 	/// If the function argument narg is a string, returns this string.  
 	/// If this argument is absent or is nil, returns ``default``. Otherwise, raises an error.
 	///
-	/// If ``len`` is not None, fills the position *``len`` with the results's length.
-	pub extern "C" fn luaL_optlstring(l: LuaState, arg: c_int, default: LuaString, len: Option<*mut SizeT>)
+	/// If ``len`` is not nullptr, fills the position *``len`` with the results's length.
+	pub extern "C" fn luaL_optlstring(l: LuaState, arg: c_int, default: LuaString, len: *mut SizeT)
 		-> LuaString;
 
 	/// If the function argument ``arg`` is a number, returns this number.  
@@ -582,24 +582,24 @@ dyn_symbols! {
 	// x / ref functions
 	/// Converts the Lua value at the given index to the signed integral type [LuaInteger].  
 	/// The Lua value must be an integer, or a number or string convertible to an integer; otherwise, this returns 0.  
-	/// If ``isnum`` is not [None], its referent is assigned a boolean value that indicates whether the operation succeeded.
-	pub extern "C" fn lua_tointegerx(l: LuaState, index: c_int, isnum: Option<*mut c_int>) -> LuaInteger;
+	/// If ``isnum`` is not [std::ptr::null_mut()], its referent is assigned a boolean value that indicates whether the operation succeeded.
+	pub extern "C" fn lua_tointegerx(l: LuaState, index: c_int, isnum: *mut c_int) -> LuaInteger;
 
 
 	/// Converts the Lua value at the given index to a [LuaNumber].  
 	/// The Lua value must be a number or a string convertible to a number; otherwise, this returns 0.  
-	/// If ``isnum`` is not None, its referent is assigned a boolean value that indicates whether the operation succeeded.  
-	pub extern "C" fn lua_tonumberx(l: LuaState, index: c_int, isnum: Option<*mut c_int>) -> LuaNumber;
+	/// If ``isnum`` is not [std::ptr::null_mut()], its referent is assigned a boolean value that indicates whether the operation succeeded.  
+	pub extern "C" fn lua_tonumberx(l: LuaState, index: c_int, isnum: *mut c_int) -> LuaNumber;
 }
 
 dyn_symbols! {
 	/// Creates and pushes a traceback of the stack L1.  
-	/// If msg is not None it is appended at the beginning of the traceback.  
+	/// If msg is not [std::ptr::null_mut()] it is appended at the beginning of the traceback.  
 	/// The level parameter tells at which level to start the traceback.
 	pub extern "C" fn luaL_traceback(
 		l: LuaState,
 		state1: LuaState,
-		msg: Option<LuaString>,
+		msg: LuaString,
 		level: c_int,
 	) -> ();
 
@@ -919,10 +919,11 @@ lua_macros! {
 		lua_pushcclosure(l, fnc, 0);
 	};
 
-	/// Equivalent to ``lua_tolstring(l, idx, None)``  
-	/// This may return None if the value at ``idx`` is not a string or a number, use [luaL_optstring] instead if you do not desire an Option<>, or lua_checkstring for arguments.
-	pub fn lua_tostring(l: LuaState, idx: c_int) -> Option<LuaString> {
-		lua_tolstring(l, idx, None)
+	/// Equivalent to ``lua_tolstring(l, idx, [std::ptr::null_mut()])``  
+	/// This may return None if the value at ``idx`` is not a string or a number.
+	/// You should use [luaL_optstring] instead if you are unsure of the value, or [luaL_checkstring] for function arguments.
+	pub fn lua_tostring(l: LuaState, idx: c_int) -> LuaString {
+		lua_tolstring(l, idx, std::ptr::null_mut())
 	};
 
 	/// Starts and resumes a coroutine in a given thread
@@ -981,7 +982,7 @@ lua_macros! {
 	/// Returns if the code was successfully executed  
 	/// Error will be left on the stack if the code failed to execute
 	pub fn luaL_dofile(l: LuaState, filename: LuaString) -> bool {
-		luaL_loadfile(l, Some(filename)) == 0 || lua_pcall(l, 0, lua::MULTRET, 0) == 0
+		luaL_loadfile(l, filename) == 0 || lua_pcall(l, 0, lua::MULTRET, 0) == 0
 	};
 
 	/// Returns value at [crate::lua::REGISTRYINDEX] with name 'name'
@@ -1003,13 +1004,13 @@ lua_macros! {
 
 	/// Asserts that a string argument exists at index 'i'
 	pub fn luaL_checkstring(l: LuaState, i: c_int) -> LuaString {
-		luaL_checklstring(l, i, None)
+		luaL_checklstring(l, i, std::ptr::null_mut())
 	};
 
 	/// Like lua_tostring or luaL_checkstring, but instead of returning an invalid string / erroring,  
 	/// It returns the given `default` string.
 	pub fn luaL_optstring(l: LuaState, i: c_int, default: LuaString) -> LuaString {
-		luaL_optlstring(l, i, default, None)
+		luaL_optlstring(l, i, default, std::ptr::null_mut())
 	};
 
 	/// Sets the C function ``f`` as the value of global name ``name``.
@@ -1113,7 +1114,7 @@ pub fn luaL_testudata(l: LuaState, arg: c_int, tname: LuaString) -> Option<*mut 
 		lua_getmetatable(l, arg); // Object metatable
 		luaL_getmetatable(l, tname); // Desired global metatable
 		if lua_rawequal(l, -1, -2) == 1 {
-			return lua_touserdata(l, arg).map(|ud| ud as *mut super::Userdata);
+			return Some(lua_touserdata(l, arg) as *mut super::Userdata);
 		}
 	}
 	None
