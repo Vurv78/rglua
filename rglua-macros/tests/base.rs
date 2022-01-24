@@ -4,6 +4,15 @@ use rglua_macros::{gmod_close, gmod_open, lua_function};
 #[derive(Debug)]
 enum LuaError {}
 
+
+// The errors you return must implement display, to be relayed to gmod.
+use std::fmt::{Display, Formatter};
+impl Display for LuaError {
+	fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+		write!(f, "LuaError")
+	}
+}
+
 #[lua_function]
 fn add(_state: LuaState) -> Result<i32, LuaError> {
 	Ok(0)

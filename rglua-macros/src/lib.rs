@@ -79,8 +79,18 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 				#(#inner_stmts)*
 			}
 		};
+
 		let resultant = quote! {
-			return #inner_fn(#lua_shared_param).unwrap();
+			match #inner_fn(#lua_shared_param) {
+				Err(why) => {
+					// Your error must implement display / .to_string().
+					// I'd recommend ``thiserror``.
+					let err = why.to_string();
+					let err = cstr!(err);
+					rglua::lua::luaL_error(#lua_shared_param, cstr!("%s"), err.as_ptr());
+				},
+				Ok(n) => { return n }
+			}
 		};
 
 		ast.block

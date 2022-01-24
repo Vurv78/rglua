@@ -9,7 +9,7 @@ fn get_iface() -> Option<&'static EngineClient> {
 #[lua_function]
 fn concmd(l: LuaState) -> i32 {
 	if let Some(iface) = get_iface() {
-		iface.ExecuteClientCmd( luaL_checklstring(l, 1, 0) );
+		iface.ExecuteClientCmd( luaL_checkstring(l, 1) );
 	}
 	0
 }

@@ -1,0 +1,13 @@
+[package]
+name = "gmod_exception"
+description = "Binary module to display exception handling with rglua"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rglua = { path = "../../rglua" }
+thiserror = "1.0.30"
