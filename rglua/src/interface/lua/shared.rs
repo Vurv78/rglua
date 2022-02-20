@@ -1,25 +1,23 @@
+use super::interface::LuaInterface;
 use super::prelude::*;
-use super::{CLuaShared, ILuaInterface};
+/// <https://github.com/danielga/garrysmod_common/blob/9981d4aaee15452a9b0f53436c1aa807f81f3fd6/include/GarrysMod/Lua/LuaShared.h#L57>
+/// This doesn't work on x86. =(
+#[vtable]
+pub struct LuaShared {
+	#[offset(2)] // 2
+	pub Shutdown: extern "C" fn(),
+	pub DumpStats: extern "C" fn(),
+	pub CreateLuaInterface: extern "C" fn(realm: c_uchar, b: bool) -> *mut LuaInterface,
+	pub CloseLuaInterface: extern "C" fn(iface: *mut LuaInterface),
 
-impl CLuaShared {
-	#[virtual_index(4)]
-	pub fn CreateLuaInterface(&self, c: c_uchar, b: bool) -> *mut ILuaInterface {}
+	/// 0 - Client
+	/// 1 - Server
+	/// 2 - Menu
+	pub GetLuaInterface: extern "C" fn(realm: c_uchar) -> *mut LuaInterface,
 
-	#[virtual_index(5)]
-	pub fn CloseLuaInterface(&self, iface: *mut ILuaInterface) {}
-
-	#[virtual_index(6)]
-	pub fn GetLuaInterface(&self, realm: c_uchar) -> *mut ILuaInterface {}
-
-	#[virtual_index(9)]
-	pub fn MountLua(&self, l: *const c_char) {}
-
-	#[virtual_index(10)]
-	pub fn MountLuaAdd(&self, l: *const c_char, l2: *const c_char) {}
-
-	#[virtual_index(11)]
-	pub fn UnMountLua(&self, l: *const c_char) {}
-
-	#[virtual_index(12)]
-	pub fn SetFileContents(&self, l: *const c_char, c: *const c_char) {}
+	#[offset(9)]
+	pub MountLua: extern "C" fn(l: *const c_char),
+	pub MountLuaAdd: extern "C" fn(l: *const c_char, l2: *const c_char),
+	pub UnMountLua: extern "C" fn(l: *const c_char),
+	pub SetFileContents: extern "C" fn(l: *const c_char, c: *const c_char)
 }

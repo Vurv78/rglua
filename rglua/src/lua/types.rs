@@ -33,7 +33,7 @@ pub type LuaWriter = extern "C" fn(LuaState, p: *const c_void, sz: SizeT, ud: *m
 #[repr(C)]
 pub struct LuaReg {
 	pub name: *const i8, // c_schar
-	pub func: Option<LuaCFunction>,
+	pub func: Option<LuaCFunction>
 }
 
 pub type LuaJITProfileCallback =
@@ -45,7 +45,7 @@ pub struct LuaBuffer {
 	pub size: SizeT,
 	pub n: SizeT, // number of chars in buffer
 	pub state: LuaState,
-	pub initbuffer: [i8; crate::lua::BUFFERSIZE],
+	pub initbuffer: [i8; crate::lua::BUFFERSIZE]
 }
 
 #[derive(Debug, Clone)]
@@ -74,7 +74,7 @@ pub struct LuaDebug {
 	pub short_src: [c_char; crate::lua::IDSIZE],
 
 	/// This should be private but whatever.
-	pub i_ci: c_int, /* active function */
+	pub i_ci: c_int /* active function */
 }
 
 impl Default for LuaDebug {
@@ -84,7 +84,14 @@ impl Default for LuaDebug {
 			namewhat: std::ptr::null(),
 			what: std::ptr::null(),
 			source: std::ptr::null(),
-			..Default::default()
+
+			event: Default::default(),
+			currentline: Default::default(),
+			nups: Default::default(),
+			linedefined: Default::default(),
+			lastlinedefined: Default::default(),
+			short_src: [0; 128],
+			i_ci: Default::default()
 		}
 	}
 }
@@ -144,12 +151,12 @@ pub enum LuaType {
 	SurfaceInfo,
 
 	/// Amount of LuaType enums (44)
-	Count,
+	Count
 }
 
 #[repr(C)]
 #[derive(Debug, Clone, Copy)]
 pub struct Userdata {
 	pub data: *mut c_void,
-	pub typ: LuaType,
+	pub typ: LuaType
 }

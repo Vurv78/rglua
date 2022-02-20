@@ -136,8 +136,8 @@ macro_rules! reg {
 #[cfg(feature = "interfaces")]
 fn get_from_interface(
 	iface: &str,
-	factory: crate::interface::CreateInterfaceFn,
-) -> Result<*mut (), crate::interface::InterfaceError> {
+	factory: crate::interface::CreateInterfaceFn
+) -> Result<*mut (), crate::interface::Error> {
 	let mut status = 0;
 
 	let iface = try_cstr!(iface)?;
@@ -146,42 +146,94 @@ fn get_from_interface(
 	if status == 0 && !result.is_null() {
 		Ok(result as *mut ())
 	} else {
-		Err(crate::interface::InterfaceError::FactoryNotFound)
+		Err(crate::interface::Error::FactoryNotFound(
+			iface.to_string_lossy().to_string()
+		))
 	}
 }
 
-/// Quickly calls [get_interface_handle] and [get_from_interface] for you in one macro call. Errors are combined into one.
+/// Quickly retrieves access to a source engine interface for you.
+/// You can either use it through iface!(file, name, typename) or iface!(name).
 /// # Examples
 /// ```rust
 /// use rglua::prelude::*;
-/// use rglua::interface::EngineClient;
+/// use rglua::interface::{EngineClient, self};
 /// #[gmod_open]
-/// fn entry(l: LuaState) -> i32 {
-///     let factory: *mut EngineClient = iface!("engine", "VEngineClient015").expect("Couldn't get VEngineClient");
-///     let instance = unsafe { factory.as_ref().unwrap() };
-///     println!("Am I in game? {}", instance.IsInGame());
-///     0
+/// fn entry(l: LuaState) -> Result<i32, interface::Error>  {
+///     let engine: &mut EngineClient = iface!("engine", "VEngineClient015", EngineClient)?;
+///     println!("Am I in game? {}", engine.IsInGame());
+///     Ok(0)
+/// }
+/// ```
+/// ```rust
+/// use rglua::prelude::*;
+/// use rglua::interface;
+/// #[gmod_open]
+/// fn entry(l: LuaState) -> Result<i32, interface::Error>  {
+///    let engine: &mut interface::EngineClient = iface!(EngineClient)?;
+///    println!("Am I in game? {}", engine.IsInGame());
+///    Ok(0)
 /// }
 /// ```
 #[macro_export]
 macro_rules! iface {
-	( $name:literal, $iface:literal ) => {{
-		if let Ok(handle) = unsafe { $crate::interface::get_interface_handle($name) } {
-			let mut status = 0;
+	( LuaShared ) => {
+		iface!("lua_shared", "LUASHARED003", $crate::interface::LuaShared)
+	};
+	( EngineClient ) => {
+		iface!(
+			"engine",
+			"VEngineClient015",
+			$crate::interface::EngineClient
+		)
+	};
+	( EngineServer ) => {
+		iface!(
+			"engine",
+			"VEngineServer021",
+			$crate::interface::EngineServer
+		)
+	};
+	( MdlCache ) => {
+		iface!("datacache", "MDLCache004", $crate::interface::MdlCache)
+	};
+	( MaterialSystem ) => {
+		iface!(
+			"materialsystem",
+			"VMaterialSystem080",
+			$crate::interface::MaterialSystem
+		)
+	};
+	( Panel ) => {
+		iface!("vgui2", "VGUI_Panel009", $crate::interface::Panel)
+	};
+	( ConVar ) => {
+		iface!("vstdlib", "VEngineCvar007", $crate::interface::ConVar)
+	};
 
-			let iface = cstr!($iface);
-			let result = handle(iface, &mut status);
+	( $name:literal, $iface:literal, $ty:ty ) => {{
+		// Would use map and flatten but flatten is unstable. =(
+		match unsafe { $crate::interface::get_interface_handle($name) } {
+			Ok(handle) => {
+				let mut status = 0;
 
-			if status == 0 && !result.is_null() {
-				Some(result as *mut _)
-			} else {
-				None
+				// Don't need to try_cstr since this is a literal.
+				let result = handle(cstr!($iface), &mut status);
+
+				if status == 0 && !result.is_null() {
+					let ptr = result as *mut $ty;
+					unsafe { ptr.as_mut() }
+						.ok_or($crate::interface::Error::IFaceMut(String::from($iface)))
+				} else {
+					Err($crate::interface::Error::CreateInterface(
+						status,
+						String::from($iface),
+					))
+				}
 			}
-		} else {
-			None
+			Err(why) => Err($crate::interface::Error::Libloading(why)),
 		}
-	}}
-	// Todo: Using expressions for name and iface. (Although you probably just want to use the functions at that point)
+	}};
 }
 
 use crate::types::LuaState;
@@ -220,7 +272,7 @@ pub fn dump_stack(l: LuaState) -> Result<String, std::fmt::Error> {
 			TNONE => write!(&mut buf, "none"),
 			TUSERDATA | TLIGHTUSERDATA => write!(&mut buf, "{:p}", lua_touserdata(l, i)),
 			TTHREAD => write!(&mut buf, "{:p}", lua_tothread(l, i)),
-			_ => write!(&mut buf, "Unknown type"),
+			_ => write!(&mut buf, "Unknown type")
 		}?
 	}
 

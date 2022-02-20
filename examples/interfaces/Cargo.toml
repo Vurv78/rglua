@@ -1,0 +1,13 @@
+[package]
+name = "gmod_interfaces"
+description = "Binary module displaying basic functionality from source interfaces"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rglua = { path = "../../rglua" }
+thiserror = "1.0.30"

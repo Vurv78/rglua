@@ -44,7 +44,7 @@ macro_rules! udata {
 		}
 		udata!( $($rest)* );
 	};
-	() => ()
+	() => ();
 }
 
 udata! {

@@ -1,24 +1,48 @@
-pub(crate) use super::prelude::{self, interfaces, VTable};
+pub(crate) use super::prelude::{self, *};
 
-interfaces! {
-	#[version("")]
-	#[file("")]
-	/// <https://github.com/danielga/garrysmod_common/blob/9981d4aaee15452a9b0f53436c1aa807f81f3fd6/include/GarrysMod/Lua/LuaObject.h#L24>
-	/// You do not use this as a typical interface, it is just a type returned by other iface functions.
-	pub abstract struct ILuaObject {};
+#[vtable]
+pub struct LuaObject {
+	pub Set: extern "C" fn(obj: *mut LuaObject),
+	pub SetFromStack: extern "C" fn(i: c_int),
+	pub Unreference: extern "C" fn(),
+	pub GetType: extern "C" fn() -> c_int,
+	pub GetString: extern "C" fn() -> *const c_char,
+	pub GetFloat: extern "C" fn() -> c_float,
+	pub GetInt: extern "C" fn() -> c_int,
+	pub GetUserdata: extern "C" fn() -> *mut c_void,
 
-	#[version("")]
-	#[file("")]
-	/// <https://github.com/danielga/garrysmod_common/blob/9981d4aaee15452a9b0f53436c1aa807f81f3fd6/include/GarrysMod/Lua/LuaInterface.h#L25>
-	/// Basically what is given to ordinary C++ binary modules that do not interface with lua_shared.
-	/// You can use this but should really just use the lua_shared bindings.
-	pub abstract struct ILuaInterface {};
+	pub SetMember: extern "C" fn(name: *const c_char),
+	pub SetMemberObj: extern "C" fn(name: *const c_char, obj: *mut LuaObject),
+	pub SetMemberFloat: extern "C" fn(name: *const c_char, f: c_float),
+	pub SetMemberBool: extern "C" fn(name: *const c_char, b: bool),
+	pub SetMemberStr: extern "C" fn(name: *const c_char, s: *const c_char),
+	//pub SetMemberFunc: extern "C" fn(name: *const c_char, func: crate::types::LuaCFunction),
+	#[offset(14)]
+	pub GetMemberBool: extern "C" fn(name: *const c_char, default: bool) -> bool,
+	pub GetMemberInt: extern "C" fn(name: *const c_char, default: c_int) -> c_int,
+	pub GetMemberFloat: extern "C" fn(name: *const c_char, default: c_float) -> c_float,
+	pub GetMemberStr: extern "C" fn(name: *const c_char, default: *const c_char) -> *const c_char,
+	pub GetMemberUserdata: extern "C" fn(name: *const c_char, default: *mut c_void) -> *mut c_void,
+	pub GetMemberUserdataNum: extern "C" fn(ind: c_float, default: *mut c_void) -> *mut c_void,
 
-	#[version("LUASHARED003")]
-	#[file("")]
-	/// <https://github.com/danielga/garrysmod_common/blob/9981d4aaee15452a9b0f53436c1aa807f81f3fd6/include/GarrysMod/Lua/LuaShared.h#L57>
-	pub abstract struct CLuaShared {};
+	pub SetMetatable: extern "C" fn(mt: *mut LuaObject),
+	pub SetUserdata: extern "C" fn(ud: *mut c_void),
+
+	pub Push: extern "C" fn(),
+	pub isNil: extern "C" fn() -> bool,
+	pub isTable: extern "C" fn() -> bool,
+	pub isString: extern "C" fn() -> bool,
+	pub isNumber: extern "C" fn() -> bool,
+	pub isFunction: extern "C" fn() -> bool,
+	pub isUserdata: extern "C" fn() -> bool,
+
+	pub GetMemberF: extern "C" fn(key: c_float) -> *mut LuaObject
 }
 
+mod base;
 mod interface;
 mod shared;
+
+pub use base::LuaBase;
+pub use interface::LuaInterface;
+pub use shared::LuaShared;

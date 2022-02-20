@@ -14,32 +14,27 @@ pub use types::*;
 
 /// Path to lua_shared dynamic library, found relative to [std::env::current_dir]
 #[cfg(all(target_os = "windows", target_arch = "x86_64"))]
-pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
-	Some( PathBuf::from("bin/win64/lua_shared.dll") )
-});
+pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> =
+	Lazy::new(|| Some(PathBuf::from("bin/win64/lua_shared.dll")));
 
 #[cfg(all(target_os = "windows", target_arch = "x86"))]
 /// Path to lua_shared dynamic library, found relative to [std::env::current_dir]
 pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 	let gmod = std::env::current_dir().expect("Failed to get current dir");
 
-	for path in [
-		"garrysmod/bin/lua_shared.dll",
-		"bin/lua_shared.dll",
-	] {
+	for path in ["garrysmod/bin/lua_shared.dll", "bin/lua_shared.dll"] {
 		let full = gmod.join(path);
 		if full.exists() {
 			return Some(full);
 		}
-	};
+	}
 	None
 });
 
 #[cfg(all(target_os = "macos"))]
 /// Path to lua_shared dynamic library, found relative to [std::env::current_dir]
-pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
-	Some( PathBuf::from("garrysmod/bin/lua_shared.dylib") )
-});
+pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> =
+	Lazy::new(|| Some(PathBuf::from("garrysmod/bin/lua_shared.dylib")));
 
 #[cfg(all(target_os = "linux", target_arch = "x86"))]
 pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
@@ -55,7 +50,7 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 		if full.exists() {
 			return Some(full);
 		}
-	};
+	}
 	None
 });
 
@@ -72,7 +67,7 @@ pub static LUA_SHARED_PATH: Lazy<Option<PathBuf>> = Lazy::new(|| {
 		if full.exists() {
 			return Some(full);
 		}
-	};
+	}
 	None
 });
 

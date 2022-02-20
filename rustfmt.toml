@@ -1,1 +1,3 @@
 hard_tabs = true
+format_macro_bodies = false
+trailing_comma = "Never"

@@ -1,16 +1,6 @@
 use super::common::StudioHdr;
 use super::prelude::*;
 
-interfaces! {
-	#[version("MDLCache004")]
-	#[file("datacache")]
-	pub abstract struct IMdlCache {};
-
-	#[version("")]
-	#[file("")]
-	pub abstract struct IMdlCacheNotify {};
-}
-
 #[repr(C)]
 pub enum MDLCacheDataType {
 	// Callbacks to get called when data is loaded or unloaded for these:
@@ -22,17 +12,15 @@ pub enum MDLCacheDataType {
 	AnimBlock,
 	VirtualModel,
 	Vertexes,
-	DecodedAnimBlock,
+	DecodedAnimBlock
 }
 
-impl IMdlCacheNotify {
-	#[virtual_index(0)]
+#[vtable]
+pub struct MdlCacheNotify {
 	/// Called right after data is loaded
-	pub fn OnDataLoaded(&self, ty: MDLCacheDataType, handle: MDLHandle) -> () {}
-
-	#[virtual_index(1)]
+	pub OnDataLoaded: extern "C" fn(ty: MDLCacheDataType, handle: MDLHandle),
 	/// Called right before data is unloaded
-	pub fn OnDataUnloaded(&self, ty: MDLCacheDataType, handle: MDLHandle) -> () {}
+	pub OnDataUnloaded: extern "C" fn(ty: MDLCacheDataType, handle: MDLHandle)
 }
 
 pub type MDLHandle = c_ushort;
@@ -50,60 +38,34 @@ pub struct VertexFileHeader {
 	numFixups: c_int,
 	fixupTableStart: c_int,
 	vertexDataStart: c_int,
-	tangentDataStart: c_int,
+	tangentDataStart: c_int
 }
 
-impl IMdlCache {
-	#[virtual_index(0)]
-	pub fn SetCacheNotify(&self, pNotify: *mut IMdlCacheNotify) -> () {}
+#[vtable]
+/// "MDLCache004"
+/// "datacache"
+pub struct MdlCache {
+	pub SetCacheNotify: extern "C" fn(pNotify: *mut MdlCacheNotify),
+	pub FindMDL: extern "C" fn(pMDLRelativePath: *const c_char) -> MDLHandle,
+	pub AddRef: extern "C" fn(handle: MDLHandle) -> c_int,
+	pub Release: extern "C" fn(handle: MDLHandle) -> c_int,
+	pub GetRef: extern "C" fn(handle: MDLHandle) -> c_int,
+	pub GetStudioHdr: extern "C" fn(handle: MDLHandle) -> *mut StudioHdr,
 
-	#[virtual_index(1)]
-	pub fn FindMDL(&self, pMDLRelativePath: *const c_char) -> MDLHandle {}
+	#[offset(9)]
+	pub GetVirtualModel: extern "C" fn(handle: MDLHandle) -> *mut VirtualModel,
 
-	#[virtual_index(2)]
-	pub fn AddRef(&self, handle: MDLHandle) -> c_int {}
+	#[offset(11)]
+	pub GetVertexData: extern "C" fn(handle: MDLHandle) -> *mut VertexFileHeader,
+	pub TouchAllData: extern "C" fn(handle: MDLHandle) -> (),
+	pub SetUserData: extern "C" fn(handle: MDLHandle, pData: *mut c_void) -> (),
+	pub GetUserData: extern "C" fn(handle: MDLHandle) -> *mut c_void,
+	pub IsErrorModel: extern "C" fn(handle: MDLHandle) -> bool,
 
-	#[virtual_index(3)]
-	pub fn Release(&self, handle: MDLHandle) -> c_int {}
-
-	#[virtual_index(4)]
-	pub fn GetRef(&self, handle: MDLHandle) -> c_int {}
-
-	#[virtual_index(5)]
-	pub fn GetStudioHdr(&self, handle: MDLHandle) -> *mut StudioHdr {}
-
-	#[virtual_index(9)]
-	pub fn GetVirtualModel(&self, handle: MDLHandle) -> *mut VirtualModel {}
-
-	#[virtual_index(11)]
-	pub fn GetVertexData(&self, handle: MDLHandle) -> *mut VertexFileHeader {}
-
-	#[virtual_index(12)]
-	pub fn TouchAllData(&self, handle: MDLHandle) -> () {}
-
-	#[virtual_index(13)]
-	pub fn SetUserData(&self, handle: MDLHandle, pData: *mut c_void) -> () {}
-
-	#[virtual_index(14)]
-	pub fn GetUserData(&self, handle: MDLHandle) -> *mut c_void {}
-
-	#[virtual_index(15)]
-	pub fn IsErrorModel(&self, handle: MDLHandle) -> bool {}
-
-	#[virtual_index(18)]
-	pub fn GetModelName(&self, handle: MDLHandle) -> *const c_char {}
-
-	#[virtual_index(19)]
-	pub fn GetVirtualModelFast(
-		&self,
-		pStudioHdr: *const StudioHdr,
-		handle: MDLHandle,
-	) -> *mut VirtualModel {
-	}
-
-	#[virtual_index(20)]
-	pub fn BeginLock(&self) -> () {}
-
-	#[virtual_index(21)]
-	pub fn EndLock(&self) -> () {}
+	#[offset(18)]
+	pub GetModelName: extern "C" fn(handle: MDLHandle) -> *const c_char,
+	pub GetVirtualModelFast:
+		extern "C" fn(pStudioHdr: *const StudioHdr, handle: MDLHandle) -> *mut VirtualModel,
+	pub BeginLock: extern "C" fn(),
+	pub EndLock: extern "C" fn()
 }
