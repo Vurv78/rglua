@@ -1,23 +1,31 @@
 use rglua::prelude::*;
-use rglua::interface::{self, LuaShared};
+use rglua::interface;
 
-#[derive(Debug, thiserror::Error)]
-enum GenericError {
-	#[error("Couldn't get interface {0}")]
-	NoInterface(String),
+#[lua_function]
+fn reload_textures(_l: LuaState) -> Result<i32, interface::Error> {
+	let matsys = iface!(MaterialSystem)?;
+	matsys.ReloadTextures();
 
-	#[error("Couldn't get interface as reference {0}")]
-	AsMut(String)
+	Ok(0)
 }
 
 #[gmod_open]
-fn open(l: LuaState) -> Result<i32, GenericError> {
+fn open(l: LuaState) -> Result<i32, interface::Error> {
 	// Access the lua state when you aren't directly given it.
 	let lua_shared = iface!(LuaShared)?;
-	let menu = unsafe { lua_shared.GetLuaInterface(2).as_mut() }
+
+	// 0 to get client state. this will error if you try and run the binary module on the server or menu realms.
+	let client = unsafe { lua_shared.GetLuaInterface(0).as_mut() }
 		.ok_or(interface::Error::AsMut)?;
 
-	printgm!(menu.base as _, "Hello from ILuaShared!");
+	printgm!(client.base as _, "Hello from ILuaShared!");
+
+	let lib = reg! [
+		"reloadTextures" => reload_textures
+	];
+
+	luaL_register(l, cstr!("interfaces"), lib.as_ptr());
+
 	Ok(0)
 }
 

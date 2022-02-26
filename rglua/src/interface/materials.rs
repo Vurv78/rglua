@@ -32,7 +32,7 @@ pub type MaterialHandle = c_ushort;
 /// "materialsystem.dll"
 #[vtable]
 pub struct MaterialSystem {
-	#[offset(70)]
+	#[offset(72)]
 	pub ReloadTextures: extern "C" fn(),
 	pub ReloadMaterials: extern "C" fn(pSubString: *const c_char),
 
@@ -45,7 +45,7 @@ pub struct MaterialSystem {
 		complain_prefix: *const c_char
 	) -> *mut c_void,
 
-	#[offset(75)]
+	#[offset(77)]
 	pub FirstMaterial: extern "C" fn() -> MaterialHandle,
 	pub NextMaterial: extern "C" fn(handle: MaterialHandle) -> MaterialHandle,
 	pub InvalidMaterial: extern "C" fn() -> MaterialHandle,
