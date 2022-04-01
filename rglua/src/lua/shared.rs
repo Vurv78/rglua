@@ -1028,13 +1028,13 @@ lua_macros! {
 
 // Userdata helpers
 lua_macros! {
-	#[cfg(feature = "userdata")]
+	
 	/// Returns a [Vector] on the stack at index ``idx``, or if there is no such value, throws a lua argument error.
 	pub fn luaL_checkvector(l: LuaState, idx: c_int) -> Vector {
 		unsafe { *( (*luaL_checkudata(l, idx, cstr!("Vector"))).data as *mut _) }
 	};
 
-	#[cfg(feature = "userdata")]
+	
 	/// Returns an [Angle] on the stack at index ``idx``, or if there is no such value, throws a lua argument error.
 	pub fn luaL_checkangle(l: LuaState, idx: c_int) -> crate::userdata::Angle {
 		unsafe { *( (*luaL_checkudata(l, idx, cstr!("Angle"))).data as *mut _) }
@@ -1056,7 +1056,7 @@ lua_macros! {
 ///     1
 /// }
 /// ```
-#[cfg(feature = "userdata")]
+
 pub fn lua_pushvector(l: LuaState, v: Vector) {
 	let ptr = lua_newuserdata(l, std::mem::size_of::<Userdata>());
 
@@ -1076,7 +1076,7 @@ pub fn lua_pushvector(l: LuaState, v: Vector) {
 }
 
 /// Pushes an angle onto the stack.
-#[cfg(feature = "userdata")]
+
 pub fn lua_pushangle(l: LuaState, v: Angle) {
 	let ptr = lua_newuserdata(l, std::mem::size_of::<Userdata>());
 
@@ -1122,7 +1122,7 @@ pub fn luaL_testudata(l: LuaState, arg: c_int, tname: LuaString) -> Option<*mut 
 
 #[inline(always)]
 #[allow(non_snake_case)]
-#[cfg(feature = "userdata")]
+
 /// Returns a [Vector] from the stack at index ``i``.
 pub fn lua_tovector<'a>(l: LuaState, i: c_int) -> Option<Vector> {
 	luaL_testudata(l, i, cstr!("Vector")).map(|x: *mut Userdata| unsafe { *(x as *mut Vector) })
@@ -1130,7 +1130,7 @@ pub fn lua_tovector<'a>(l: LuaState, i: c_int) -> Option<Vector> {
 
 #[inline(always)]
 #[allow(non_snake_case)]
-#[cfg(feature = "userdata")]
+
 /// Returns an [Angle] from the stack at index ``i``.
 pub fn lua_toangle(l: LuaState, i: c_int) -> Option<Angle> {
 	luaL_testudata(l, i, cstr!("Angle")).map(|x: *mut Userdata| unsafe { *(x as *mut Angle) })

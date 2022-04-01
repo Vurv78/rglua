@@ -7,8 +7,6 @@ pub(crate) mod prelude {
 	pub(crate) use std::os::raw::{
 		c_char, c_double, c_float, c_int, c_long, c_uchar, c_uint, c_ushort, c_void
 	};
-
-	#[cfg(feature = "userdata")]
 	pub(crate) use crate::userdata::Vector;
 }
 
@@ -20,14 +18,16 @@ mod materials;
 mod mdl;
 mod net;
 mod panel;
+mod client;
 
 pub use cvar::{CVar, ConVar};
 pub use engine::{EngineClient, EngineServer};
 pub use lua::{LuaInterface, LuaObject, LuaShared};
 pub use materials::MaterialSystem;
 pub use mdl::{MdlCache, MdlCacheNotify};
-pub use net::NetChannelInfo;
+pub use net::{NetChannelInfo, NetChannel, NetChannelHandler, NetMessage, CNetChan};
 pub use panel::Panel;
+pub use client::Client;
 
 use crate::try_cstr;
 use libloading::{Library, Symbol};

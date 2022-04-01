@@ -12,7 +12,7 @@ pub struct Material {
 	pub IsAlphaTested: extern "C" fn() -> bool,
 	pub IsVertexLit: extern "C" fn() -> bool,
 
-	#[cfg(feature = "userdata")]
+	
 	#[offset(31)]
 	pub GetReflectivity: extern "C" fn(reflect: &mut Vector),
 

@@ -10,17 +10,6 @@ macro_rules! udata {
 	) => {
 		#[repr(C)]
 		#[derive(
-			derive_more::Add,
-			derive_more::AddAssign,
-			derive_more::Sub,
-			derive_more::SubAssign,
-			derive_more::Mul,
-			derive_more::MulAssign,
-			derive_more::Div,
-			derive_more::DivAssign,
-			derive_more::Rem,
-			derive_more::RemAssign,
-			derive_more::Into,
 			PartialEq,
 			PartialOrd,
 			Debug,

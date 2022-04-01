@@ -1,3 +1,4 @@
+use crate::interface::common::SkyboxVisibility;
 use crate::interface::{MaterialSystem, NetChannelInfo};
 
 use super::common::ButtonCode;
@@ -33,10 +34,10 @@ pub struct ClientTextMessage {
 #[vtable]
 pub struct EngineClient {
 	#[offset(1)]
-	#[cfg(feature = "userdata")]
+	
 	pub GetLightForPoint: extern "C" fn(pos: &Vector, bClamp: bool) -> Vector,
 
-	#[cfg(feature = "userdata")]
+	
 	pub TraceLineMaterialAndLighting: extern "C" fn(
 		start: &Vector,
 		end: &Vector,
@@ -114,35 +115,47 @@ pub struct EngineClient {
 	pub SaveAllocMemory: extern "C" fn(num: usize, size: usize) -> *mut c_void,
 	pub SaveFreeMemory: extern "C" fn(pSaveMem: *mut c_void),
 
-	#[offset(72)]
+	#[check(72)]
 	pub GetNetChannelInfo: extern "C" fn() -> *mut NetChannelInfo,
-
-	#[offset(76)]
+	#[skip(1)]
+	pub CheckPoint: extern "C" fn(pname: *const c_char),
+	pub DrawPortals: extern "C" fn(),
+	#[check(76)]
 	pub IsPlayingDemo: extern "C" fn() -> bool,
 	pub IsRecordingDemo: extern "C" fn() -> bool,
-
-	#[offset(84)]
+	pub IsPlayingTimeDemo: extern "C" fn() -> bool,
+	pub GetDemoRecordingTick: extern "C" fn() -> c_int,
+	pub GetDemoPlaybackTick: extern "C" fn() -> c_int,
+	pub GetDemoPlaybackStartTick: extern "C" fn() -> c_int,
+	pub GetDemoPlaybackTimeScale: extern "C" fn() -> c_float,
+	pub GetDemoPlaybackTotalTicks: extern "C" fn() -> c_int,
+	#[check(84)]
 	pub IsPaused: extern "C" fn() -> bool,
 	pub IsTakingScreenshot: extern "C" fn() -> bool,
 	pub IsHLTV: extern "C" fn() -> bool,
 	pub IsLevelMainMenuBackground: extern "C" fn() -> bool,
 	pub GetMainMenuBackgroundName: extern "C" fn(dest: *mut c_char, destlen: c_int),
 
-	#[offset(91)]
+	#[skip(2)]
+	#[check(91)]
 	pub GetUILanguage: extern "C" fn(dest: *mut c_char, destlen: c_int),
-
-	#[offset(94)]
+	pub IsSkyboxVisibleFromPoint: extern "C" fn(vecPoint: &Vector) -> SkyboxVisibility,
+	pub GetMapEntitiesString: extern "C" fn() -> *const c_char,
 	pub IsInEditMode: extern "C" fn() -> bool,
 	pub GetScreenAspectRatio: extern "C" fn() -> c_float,
 
-	#[offset(101)]
+	#[skip(2)]
+	pub GetEngineBuildNumber: extern "C" fn() -> c_uint,
+	pub GetProductVersionString: extern "C" fn() -> *const c_char,
+	pub GrabPreColorCorrectedFrame: extern "C" fn(x: c_int, y: c_int, width: c_int, height: c_int),
+	#[check(101)]
 	pub IsHammerRunning: extern "C" fn() -> bool,
 	/// This is NOT checked against the FCVAR_CLIENTCMD_CAN_EXECUTE vars
 	pub ExecuteClientCmd: extern "C" fn(cmd: *const c_char),
 	pub MapHasHDRLighting: extern "C" fn() -> bool,
 	pub GetAppID: extern "C" fn() -> c_int,
 
-	#[cfg(feature = "userdata")]
+	
 	pub GetLightForPointFast: extern "C" fn(pos: &Vector, bClamp: bool) -> Vector,
 
 	#[offset(106)]

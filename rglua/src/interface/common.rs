@@ -175,3 +175,10 @@ impl ButtonCode {
 	pub const KeyLAST: Self = Self::KeySCROLLLOCKTOGGLE;
 	pub const KeyCOUNT: i32 = (Self::KeyLAST as i32 - Self::KeyFIRST as i32 + 1);
 }
+
+#[repr(C)]
+pub enum SkyboxVisibility {
+	NotVisible,
+	Visible3D,
+	Visible2D
+}

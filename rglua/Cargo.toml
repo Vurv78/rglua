@@ -1,7 +1,7 @@
 [package]
 name = "rglua"
 description = "Toolkit for garrysmod development with the source sdk and luajit api"
-version = "3.0.0-beta"
+version = "3.0.0-beta2"
 authors = ["Vurv <vurvdevelops@gmail.com>"]
 keywords = ["glua", "garrysmod", "lua", "gmod"]
 categories = ["api-bindings", "external-ffi-bindings", "development-tools::ffi", "game-development", "accessibility"]
@@ -18,12 +18,9 @@ once_cell = "1.8.0"
 thiserror = "1.0.30"
 
 rglua-macros = { version = "0.2.0", path = "../rglua-macros" }
-derive_more = { version = "0.99.17", optional = true }
 
-viable = { version = "0.1", optional = true }
+viable = { version = "0.2", optional = true }
 
 [features]
-default = ["interfaces", "userdata"]
-
+default = ["interfaces"]
 interfaces = ["viable"]
-userdata = ["derive_more"]

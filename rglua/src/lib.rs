@@ -9,6 +9,4 @@ pub use lua::types;
 
 pub use rglua_macros::*;
 pub mod prelude;
-
-#[cfg(feature = "userdata")]
 pub mod userdata;

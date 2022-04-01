@@ -4,7 +4,7 @@ use super::prelude::*;
 /// This doesn't work on x86. =(
 #[vtable]
 pub struct LuaShared {
-	#[offset(2)] // 2
+	#[skip(2)] // ~LuaShared, Init
 	pub Shutdown: extern "C" fn(),
 	pub DumpStats: extern "C" fn(),
 	pub CreateLuaInterface: extern "C" fn(realm: c_uchar, b: bool) -> *mut LuaInterface,
@@ -14,10 +14,14 @@ pub struct LuaShared {
 	/// 1 - Server
 	/// 2 - Menu
 	pub GetLuaInterface: extern "C" fn(realm: c_uchar) -> *mut LuaInterface,
-
-	#[offset(9)]
+	#[skip(2)] // LoadFile, GetCache
 	pub MountLua: extern "C" fn(l: *const c_char),
 	pub MountLuaAdd: extern "C" fn(l: *const c_char, l2: *const c_char),
 	pub UnMountLua: extern "C" fn(l: *const c_char),
-	pub SetFileContents: extern "C" fn(l: *const c_char, c: *const c_char)
+	pub SetFileContents: extern "C" fn(l: *const c_char, c: *const c_char),
+	pub SetLuaFindHook: extern "C" fn(p: *mut c_void),
+	#[skip(1)] // FindScripts
+	pub GetStackTraces: extern "C" fn() -> *const c_char,
+	#[skip(1)] // InvalidateCache
+	pub EmptyCache: extern "C" fn(),
 }

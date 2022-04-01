@@ -1,5 +1,5 @@
 use rglua::prelude::*;
-use rglua::interface;
+use rglua::interface::{self, NetChannel, CNetChan};
 
 #[lua_function]
 fn reload_textures(_l: LuaState) -> Result<i32, interface::Error> {
@@ -7,6 +7,22 @@ fn reload_textures(_l: LuaState) -> Result<i32, interface::Error> {
 	matsys.ReloadTextures();
 
 	Ok(0)
+}
+
+#[lua_function]
+fn disconnect(l: LuaState) -> Result<i32, interface::Error> {
+	let msg = luaL_checkstring(l, 1);
+	let engine = iface!(EngineClient)?;
+
+	let chan = engine.GetNetChannelInfo() as *mut CNetChan;
+	let chan = unsafe { chan.as_mut() }
+		.ok_or(interface::Error::AsMut)?;
+
+	printgm!(l, "{:?}", try_rstr!(chan.GetAddress()));
+
+	chan.Clear();
+	chan.Shutdown(msg);
+	return Ok(0);
 }
 
 #[gmod_open]
@@ -21,7 +37,8 @@ fn open(l: LuaState) -> Result<i32, interface::Error> {
 	printgm!(client.base as _, "Hello from ILuaShared!");
 
 	let lib = reg! [
-		"reloadTextures" => reload_textures
+		"reloadTextures" => reload_textures,
+		"disconnect" => disconnect
 	];
 
 	luaL_register(l, cstr!("interfaces"), lib.as_ptr());
