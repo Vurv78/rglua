@@ -1,19 +1,24 @@
 use proc_macro::TokenStream;
 use quote::{quote, ToTokens};
 
-use syn::{parse_macro_input, parse_quote, FnArg, ItemFn, ReturnType, Type};
+use syn::{parse_macro_input, parse_quote, spanned::Spanned, FnArg, ItemFn, ReturnType, Type};
 
 fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 	let mut returns_result: Option<&Box<Type>> = None;
 
 	let mut ast = parse_macro_input!(item as ItemFn);
 
-	assert!(ast.sig.asyncness.is_none(), "Cannot be asynchronous");
-	assert!(ast.sig.constness.is_none(), "Cannot be const");
-	assert!(
-		ast.sig.inputs.len() == 1,
-		"Must have one parameter, being the Lua state (rglua::lua::LuaState)"
-	);
+	if ast.sig.asyncness.is_some() {
+		return syn::Error::new(ast.sig.span(), "Cannot be async").into_compile_error().into();
+	}
+
+	if ast.sig.constness.is_some() {
+		return syn::Error::new(ast.sig.span(), "Cannot be const").into_compile_error().into();
+	}
+
+	if ast.sig.inputs.len() != 1 {
+		return syn::Error::new(ast.sig.span(), "Must have one parameter, being the Lua state (rglua::lua::LuaState)").into_compile_error().into();
+	}
 
 	if let ReturnType::Type(_, ty) = &ast.sig.output {
 		let mut ret = ty.to_token_stream().to_string();
@@ -21,25 +26,24 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 			ret.retain(|c| !c.is_whitespace());
 			returns_result = Some(ty);
 		} else {
-			assert!(
-				ret.as_str() == "i32",
-				"Exported function must return i32 or Result<i32, E>"
-			);
+			if ret.as_str() != "i32" {
+				return syn::Error::new(ast.sig.output.span(), "Exported function must return i32 or Result<i32, E>").into_compile_error().into();
+			}
 		}
 	} else {
-		panic!("Exported function must return i32 or Result<i32, E>");
+		return syn::Error::new(ast.sig.output.span(), "Exported function must return i32 or Result<i32, E>").into_compile_error().into();
 	}
 
 	let lua_shared_param;
 	let lua_shared_ty;
 	// Make sure parameter is a LuaState
 	match ast.sig.inputs.first().unwrap() {
-		FnArg::Receiver(_) => panic!("Parameter cannot be self"),
+		FnArg::Receiver(_) => return syn::Error::new(ast.sig.inputs.span(), "Parameter cannot be self").into_compile_error().into(),
 		FnArg::Typed(arg) => {
 			// In the future this could check if it is *c_void as well.
 			match arg.ty.to_token_stream().to_string().as_str() {
 				"LuaState" | "rglua :: lua :: LuaState" => (),
-				a => panic!("Parameter must be rglua::lua::LuaState. Got {}", a),
+				a => return syn::Error::new(arg.ty.span(), format!("Parameter must be rglua::lua::LuaState. Got {a}")).to_compile_error().into(),
 			}
 
 			lua_shared_ty = &arg.ty;
@@ -49,9 +53,9 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 					lua_shared_param = &i.ident;
 				}
 				syn::Pat::Wild(_) => {
-					panic!("Parameter must be named. Try _foo");
+					return syn::Error::new(arg.pat.span(), "Parameter must be named. Try _foo").to_compile_error().into();
 				}
-				_ => panic!("Parameter must be in ``ident: ty`` format"),
+				_ => return syn::Error::new(arg.pat.span(), "Parameter must be in 'ident: ty' format").to_compile_error().into(),
 			}
 		}
 	}
@@ -60,7 +64,7 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 	if let Some(abi) = &ast.sig.abi {
 		match abi.name.as_ref().unwrap().value().as_str() {
 			"C" | "C-unwind" => (),
-			_ => panic!("Only C (or C-unwind) ABI is supported"),
+			_ => return syn::Error::new(abi.span(), "Only C or C-unwind are supported").to_compile_error().into(),
 		}
 	} else {
 		ast.sig.abi = Some(parse_quote!(extern "C"))
@@ -115,7 +119,7 @@ fn handle_gmod(item: TokenStream, export: Option<&str>) -> TokenStream {
 	for attr in &ast.attrs {
 		if let Some(id) = attr.path.get_ident() {
 			if id == "no_mangle" {
-				panic!("Using no_mangle is unnecessary on exported functions");
+				return syn::Error::new(id.span(), "Using no_mangle is unnecessary on exported functions").into_compile_error().into();
 			}
 		}
 	}
